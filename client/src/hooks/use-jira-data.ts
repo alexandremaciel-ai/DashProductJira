@@ -294,11 +294,12 @@ export function useDeveloperProductivity(issues: JiraIssue[]): DeveloperProducti
 
     issues.forEach(issue => {
       if (issue.fields.assignee) {
-        const key = issue.fields.assignee.emailAddress;
+        // Use displayName as key since it's always available
+        const key = issue.fields.assignee.displayName;
         if (!developerMap.has(key)) {
           developerMap.set(key, {
             name: issue.fields.assignee.displayName,
-            email: issue.fields.assignee.emailAddress,
+            email: issue.fields.assignee.emailAddress || '',
             issues: [],
             resolvedIssues: [],
             totalPoints: 0,
