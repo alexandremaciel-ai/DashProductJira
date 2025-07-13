@@ -37,10 +37,21 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials
       ? Array.from(new Set(issues.map(issue => issue.fields.issuetype.name)))
       : ["Story", "Bug", "Task", "Epic"]); // fallback default types
 
-  // Get actual team members from issues assignees (same as Kanban board)
-  const assigneesFromIssues = Array.from(
+  // Get all assignees from ALL issues (not just filtered ones) to prevent members from disappearing
+  // This uses the original issues data before filtering to maintain the full team list
+  const { data: allIssuesData } = useJiraIssues(credentials, projectKey, { 
+    timePeriod: "custom", 
+    sprint: undefined, 
+    assignee: undefined, 
+    issueTypes: [] 
+  });
+  
+  const allIssues = allIssuesData?.issues || [];
+  
+  // Get actual team members from ALL issues assignees (to keep full list available)
+  const assigneesFromAllIssues = Array.from(
     new Map(
-      issues
+      allIssues
         .filter(issue => issue.fields.assignee) // Only issues with assignees
         .map(issue => [
           issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName,
@@ -53,8 +64,8 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials
     ).values()
   );
 
-  // Use assignees from issues to match Kanban board
-  const teamMembers = assigneesFromIssues;
+  // Use assignees from all issues to keep the full team list available
+  const teamMembers = assigneesFromAllIssues;
 
   const handleTimePeriodChange = (period: DashboardFilters["timePeriod"]) => {
     onFiltersChange({ ...filters, timePeriod: period });

@@ -98,7 +98,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jql += dateFilter;
       }
 
-      if (filters?.assignee && filters.assignee !== "All Developers") {
+      if (filters?.assignee && filters.assignee !== "all") {
         jql += ` AND assignee = "${filters.assignee}"`;
       }
 

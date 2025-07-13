@@ -189,9 +189,17 @@ export default function DashboardPage() {
     handleExportPDF();
   };
 
-  // Quick stats - use assignees from issues to match other components
+  // Quick stats - use assignees from all issues (not filtered) to show total team count
+  const { data: allIssuesData } = useJiraIssues(credentials, selectedProject?.key || null, { 
+    timePeriod: "custom", 
+    sprint: undefined, 
+    assignee: undefined, 
+    issueTypes: [] 
+  });
+  
+  const allIssues = allIssuesData?.issues || [];
   const assigneesCount = new Set(
-    issues
+    allIssues
       .filter(issue => issue.fields.assignee)
       .map(issue => issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName)
   ).size;
