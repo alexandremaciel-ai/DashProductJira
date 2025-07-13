@@ -189,10 +189,16 @@ export default function DashboardPage() {
     handleExportPDF();
   };
 
-  // Quick stats
+  // Quick stats - use assignees from issues to match other components
+  const assigneesCount = new Set(
+    issues
+      .filter(issue => issue.fields.assignee)
+      .map(issue => issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName)
+  ).size;
+
   const quickStats = {
     activeIssues: issues.filter(i => i.fields.status.statusCategory.key !== "done").length,
-    teamMembers: projectMembers?.length || 0,
+    teamMembers: assigneesCount,
     avgCycleTime: metrics.cycleTime,
   };
 

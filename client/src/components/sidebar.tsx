@@ -37,8 +37,24 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials
       ? Array.from(new Set(issues.map(issue => issue.fields.issuetype.name)))
       : ["Story", "Bug", "Task", "Epic"]); // fallback default types
 
-  // Get actual team members (assignees) from project
-  const teamMembers = projectMembers || [];
+  // Get actual team members from issues assignees (same as Kanban board)
+  const assigneesFromIssues = Array.from(
+    new Map(
+      issues
+        .filter(issue => issue.fields.assignee) // Only issues with assignees
+        .map(issue => [
+          issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName,
+          {
+            accountId: issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName,
+            displayName: issue.fields.assignee!.displayName,
+            emailAddress: issue.fields.assignee!.emailAddress || "",
+          }
+        ])
+    ).values()
+  );
+
+  // Use assignees from issues to match Kanban board
+  const teamMembers = assigneesFromIssues;
 
   const handleTimePeriodChange = (period: DashboardFilters["timePeriod"]) => {
     onFiltersChange({ ...filters, timePeriod: period });
