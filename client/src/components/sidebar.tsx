@@ -38,22 +38,10 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
       ? Array.from(new Set(issues.map(issue => issue.fields.issuetype.name)))
       : ["Story", "Bug", "Task", "Epic"]); // fallback default types
 
-  // Get team members from issues assignees (same as Kanban board)
-  // We need to use the project's issues to get only actual assignees with tasks
-  const allIssuesFilters = { 
-    timePeriod: "custom" as const, 
-    sprint: undefined, 
-    assignee: undefined, 
-    issueTypes: [] 
-  };
-  const { data: allIssuesData } = useJiraIssues(credentials, projectKey, allIssuesFilters);
-  
-  const projectIssues = allIssuesData?.issues || [];
-  
-  // Extract unique assignees from project issues (same as Kanban)
+  // Extract unique assignees from current issues (same as Kanban)
   const teamMembers = Array.from(
     new Map(
-      projectIssues
+      issues
         .filter(issue => issue.fields.assignee) // Only issues with assignees
         .map(issue => {
           const assignee = issue.fields.assignee!;
