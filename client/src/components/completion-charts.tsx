@@ -264,10 +264,10 @@ export function CompletionCharts({ issues, allIssues, dashboardFilters }: Comple
   }, [issues]);
 
   const completionData = useMemo(() => {
-    // Usar as tarefas já filtradas pelo dashboard (que respeitam o período selecionado)
+    // Usar as tarefas já filtradas pelo dashboard (que respeitam o período selecionado para CRIAÇÃO)
     const issuesForChart = issues; // Issues já filtradas pelo período do dashboard
     
-    // Filtrar tarefas concluídas - SOMENTE usar tarefas com resolutiondate
+    // Filtrar tarefas concluídas - MESMO critério do card "Concluídas"
     const completedIssues = issuesForChart.filter(issue => {
       const isDone = issue.fields.status.statusCategory.key === "done" || 
                     issue.fields.status.statusCategory.name === "Done" ||
@@ -276,8 +276,9 @@ export function CompletionCharts({ issues, allIssues, dashboardFilters }: Comple
                     issue.fields.status.name.toLowerCase().includes("fechado") ||
                     issue.fields.status.name.toLowerCase().includes("resolvido");
       
-      // Usar APENAS tarefas com data de resolução para mostrar evolução real
-      return isDone && issue.fields.resolutiondate;
+      // Usar APENAS o status Done, não necessariamente precisa ter resolutiondate
+      // Isso alinha com o cálculo do card "Concluídas"
+      return isDone;
     });
 
     const now = new Date();
@@ -308,8 +309,9 @@ export function CompletionCharts({ issues, allIssues, dashboardFilters }: Comple
       }
 
       completedIssues.forEach(issue => {
-        // Usar APENAS resolutiondate para mostrar evolução real
-        const resolvedDate = new Date(issue.fields.resolutiondate);
+        // Para tarefas concluídas, usar resolutiondate se disponível, senão usar updated
+        const dateToUse = issue.fields.resolutiondate || issue.fields.updated;
+        const resolvedDate = new Date(dateToUse);
         const key = resolvedDate.toISOString().split('T')[0];
         if (data.hasOwnProperty(key)) {
           data[key]++;
@@ -341,7 +343,9 @@ export function CompletionCharts({ issues, allIssues, dashboardFilters }: Comple
         }
 
         completedIssues.forEach(issue => {
-          const resolvedDate = new Date(issue.fields.resolutiondate);
+          // Para tarefas concluídas, usar resolutiondate se disponível, senão usar updated
+          const dateToUse = issue.fields.resolutiondate || issue.fields.updated;
+          const resolvedDate = new Date(dateToUse);
           const key = resolvedDate.toLocaleDateString('pt-BR', { weekday: 'short' });
           if (weekData.hasOwnProperty(key)) {
             weekData[key].count++;
@@ -370,8 +374,9 @@ export function CompletionCharts({ issues, allIssues, dashboardFilters }: Comple
         }
 
         completedIssues.forEach(issue => {
-          // Usar APENAS resolutiondate para mostrar evolução real
-          const resolvedDate = new Date(issue.fields.resolutiondate);
+          // Para tarefas concluídas, usar resolutiondate se disponível, senão usar updated
+          const dateToUse = issue.fields.resolutiondate || issue.fields.updated;
+          const resolvedDate = new Date(dateToUse);
           const issueWeekStart = new Date(resolvedDate);
           issueWeekStart.setDate(issueWeekStart.getDate() - issueWeekStart.getDay());
           
@@ -399,8 +404,9 @@ export function CompletionCharts({ issues, allIssues, dashboardFilters }: Comple
       }
 
       completedIssues.forEach(issue => {
-        // Usar APENAS resolutiondate para mostrar evolução real
-        const resolvedDate = new Date(issue.fields.resolutiondate);
+        // Para tarefas concluídas, usar resolutiondate se disponível, senão usar updated
+        const dateToUse = issue.fields.resolutiondate || issue.fields.updated;
+        const resolvedDate = new Date(dateToUse);
         const key = `${resolvedDate.getFullYear()}-${String(resolvedDate.getMonth() + 1).padStart(2, '0')}`;
         if (data.hasOwnProperty(key)) {
           data[key]++;
@@ -432,7 +438,7 @@ export function CompletionCharts({ issues, allIssues, dashboardFilters }: Comple
                     issue.fields.status.name.toLowerCase().includes("done") ||
                     issue.fields.status.name.toLowerCase().includes("fechado") ||
                     issue.fields.status.name.toLowerCase().includes("resolvido");
-      return isDone && issue.fields.resolutiondate;
+      return isDone; // Mesmo critério do card
     }).length,
     totalCompleted,
     avgPerPeriod,
