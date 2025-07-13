@@ -54,4 +54,12 @@ export const jiraApi = {
     });
     return response.data;
   },
+
+  async getProjectMetadata(credentials: JiraCredentials, projectKey: string): Promise<any> {
+    const response = await api.post("/jira/project-metadata", {
+      ...credentials,
+      projectKey,
+    });
+    return response.data;
+  },
 };

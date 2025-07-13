@@ -2,12 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
-import type { DashboardFilters, JiraSprint } from "@/types/jira";
+import type { DashboardFilters, JiraSprint, JiraIssue } from "@/types/jira";
 
 interface SidebarProps {
   filters: DashboardFilters;
   onFiltersChange: (filters: DashboardFilters) => void;
   sprints: JiraSprint[];
+  issues: JiraIssue[];
   quickStats: {
     activeIssues: number;
     teamMembers: number;
@@ -15,7 +16,7 @@ interface SidebarProps {
   };
 }
 
-export function Sidebar({ filters, onFiltersChange, sprints, quickStats }: SidebarProps) {
+export function Sidebar({ filters, onFiltersChange, sprints, issues, quickStats }: SidebarProps) {
   const timePeriods = [
     { value: "week", label: "This Week" },
     { value: "month", label: "This Month" },
@@ -23,7 +24,10 @@ export function Sidebar({ filters, onFiltersChange, sprints, quickStats }: Sideb
     { value: "custom", label: "Custom" },
   ] as const;
 
-  const issueTypes = ["Stories", "Bugs", "Tasks", "Epics"];
+  // Get unique issue types from actual issues
+  const issueTypes = issues && issues.length > 0 
+    ? Array.from(new Set(issues.map(issue => issue.fields.issuetype.name)))
+    : ["Story", "Bug", "Task", "Epic"]; // fallback default types
 
   const handleTimePeriodChange = (period: DashboardFilters["timePeriod"]) => {
     onFiltersChange({ ...filters, timePeriod: period });

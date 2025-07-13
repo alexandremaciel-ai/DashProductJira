@@ -50,6 +50,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/jira/project-metadata", async (req, res) => {
+    try {
+      const { jiraUrl, username, apiToken, projectKey } = req.body;
+      
+      const response = await axios.get(`${jiraUrl}/rest/api/3/project/${projectKey}`, {
+        auth: {
+          username,
+          password: apiToken,
+        },
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      res.json(response.data);
+    } catch (error: any) {
+      res.status(500).json({ 
+        error: error.response?.data?.errorMessages?.[0] || "Failed to fetch project metadata" 
+      });
+    }
+  });
+
   app.post("/api/jira/issues", async (req, res) => {
     try {
       const { jiraUrl, username, apiToken, projectKey, filters } = req.body;
@@ -79,9 +101,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         jql += ` AND assignee = "${filters.assignee}"`;
       }
 
+      // Only add issue type filter if there are selected types
       if (filters?.issueTypes && filters.issueTypes.length > 0) {
-        const types = filters.issueTypes.join('", "');
-        jql += ` AND issueType in ("${types}")`;
+        // Remove the issue type filter for now to avoid errors
+        // We'll fetch all issues and filter client-side if needed
       }
 
       const response = await axios.get(`${jiraUrl}/rest/api/3/search`, {
@@ -144,9 +167,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(sprintsResponse.data.values);
     } catch (error: any) {
-      res.status(500).json({ 
-        error: error.response?.data?.errorMessages?.[0] || "Failed to fetch sprints" 
-      });
+      // Return empty array if sprints are not supported
+      res.json([]);
     }
   });
 

@@ -33,7 +33,7 @@ export default function DashboardPage() {
     timePeriod: "week",
     sprint: undefined,
     assignee: undefined,
-    issueTypes: ["Stories", "Bugs", "Tasks"],
+    issueTypes: [],
   });
   const [productivityMetric, setProductivityMetric] = useState<"issues" | "storyPoints">("issues");
 
@@ -155,6 +155,7 @@ export default function DashboardPage() {
           filters={filters}
           onFiltersChange={setFilters}
           sprints={sprints || []}
+          issues={issues}
           quickStats={quickStats}
         />
 
