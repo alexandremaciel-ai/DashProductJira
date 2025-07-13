@@ -247,6 +247,91 @@ export default function DashboardPage() {
     }
   };
 
+  // Helper function to get tasks from previous period for comparison
+  const getTasksFromPreviousPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
+    const now = new Date();
+    let startDate: Date;
+    let endDate: Date;
+
+    switch (filters.timePeriod) {
+      case 'week':
+        startDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000); // 14 days ago
+        endDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 56 * 24 * 60 * 60 * 1000); // 8 weeks ago
+        endDate = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000); // 4 weeks ago
+        break;
+      case 'quarter':
+        startDate = new Date(now.getTime() - 168 * 24 * 60 * 60 * 1000); // 24 weeks ago
+        endDate = new Date(now.getTime() - 84 * 24 * 60 * 60 * 1000); // 12 weeks ago
+        break;
+      case 'custom':
+      case 'all':
+      default:
+        return []; // No comparison for custom or all periods
+    }
+
+    return allIssues.filter(issue => {
+      const createdDate = new Date(issue.fields.created);
+      return createdDate >= startDate && createdDate <= endDate;
+    });
+  };
+
+  // Calculate percentage change
+  const calculatePercentageChange = (current: number, previous: number): number => {
+    if (previous === 0) {
+      return current > 0 ? 100 : 0;
+    }
+    return Math.round(((current - previous) / previous) * 100);
+  };
+
+  // Get current and previous period data for comparisons
+  const currentPeriodTasks = getTasksCreatedInPeriod(issues, filters);
+  const previousPeriodTasks = getTasksFromPreviousPeriod(issues, filters);
+
+  // Calculate current period stats
+  const currentStats = {
+    total: currentPeriodTasks.length,
+    todo: currentPeriodTasks.filter(i => 
+      i.fields.status.statusCategory.name === "To Do" || 
+      i.fields.status.statusCategory.key === "new"
+    ).length,
+    inProgress: currentPeriodTasks.filter(i => 
+      i.fields.status.statusCategory.name === "In Progress" || 
+      i.fields.status.statusCategory.key === "indeterminate"
+    ).length,
+    done: currentPeriodTasks.filter(i => 
+      i.fields.status.statusCategory.name === "Done" || 
+      i.fields.status.statusCategory.key === "done"
+    ).length
+  };
+
+  // Calculate previous period stats
+  const previousStats = {
+    total: previousPeriodTasks.length,
+    todo: previousPeriodTasks.filter(i => 
+      i.fields.status.statusCategory.name === "To Do" || 
+      i.fields.status.statusCategory.key === "new"
+    ).length,
+    inProgress: previousPeriodTasks.filter(i => 
+      i.fields.status.statusCategory.name === "In Progress" || 
+      i.fields.status.statusCategory.key === "indeterminate"
+    ).length,
+    done: previousPeriodTasks.filter(i => 
+      i.fields.status.statusCategory.name === "Done" || 
+      i.fields.status.statusCategory.key === "done"
+    ).length
+  };
+
+  // Calculate percentage changes
+  const changes = {
+    total: calculatePercentageChange(currentStats.total, previousStats.total),
+    todo: calculatePercentageChange(currentStats.todo, previousStats.todo),
+    inProgress: calculatePercentageChange(currentStats.inProgress, previousStats.inProgress),
+    done: calculatePercentageChange(currentStats.done, previousStats.done)
+  };
+
   // Quick stats - use assignees from current issues
   const assigneesCount = new Set(
     issues
@@ -314,41 +399,32 @@ export default function DashboardPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <MetricsCard
                   title="Total de Tarefas"
-                  value={getTasksCreatedInPeriod(issues, filters).length}
-                  change={0}
+                  value={currentStats.total}
+                  change={changes.total}
                   icon={<CheckCircle className="text-blue-600" size={20} />}
                   description={`Criadas ${getPeriodDescription(filters.timePeriod)}`}
                   iconBgColor="bg-blue-100"
                 />
                 <MetricsCard
                   title="A Fazer"
-                  value={getTasksCreatedInPeriod(issues, filters).filter(i => 
-                    i.fields.status.statusCategory.name === "To Do" || 
-                    i.fields.status.statusCategory.key === "new"
-                  ).length}
-                  change={0}
+                  value={currentStats.todo}
+                  change={changes.todo}
                   icon={<Clock className="text-gray-600" size={20} />}
                   description={`Criadas ${getPeriodDescription(filters.timePeriod)} - pendentes`}
                   iconBgColor="bg-gray-100"
                 />
                 <MetricsCard
                   title="Em Progresso"
-                  value={getTasksCreatedInPeriod(issues, filters).filter(i => 
-                    i.fields.status.statusCategory.name === "In Progress" || 
-                    i.fields.status.statusCategory.key === "indeterminate"
-                  ).length}
-                  change={0}
+                  value={currentStats.inProgress}
+                  change={changes.inProgress}
                   icon={<Rocket className="text-yellow-600" size={20} />}
                   description={`Criadas ${getPeriodDescription(filters.timePeriod)} - em andamento`}
                   iconBgColor="bg-yellow-100"
                 />
                 <MetricsCard
                   title="Concluídas"
-                  value={getTasksCreatedInPeriod(issues, filters).filter(i => 
-                    i.fields.status.statusCategory.name === "Done" || 
-                    i.fields.status.statusCategory.key === "done"
-                  ).length}
-                  change={0}
+                  value={currentStats.done}
+                  change={changes.done}
                   icon={<CheckCircle className="text-green-600" size={20} />}
                   description={`Criadas ${getPeriodDescription(filters.timePeriod)} - finalizadas`}
                   iconBgColor="bg-green-100"
@@ -363,20 +439,24 @@ export default function DashboardPage() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <p className="font-semibold text-blue-700">Total Criadas no Período:</p>
-                      <p className="text-blue-600">{getTasksCreatedInPeriod(issues, filters).length}</p>
+                      <p className="font-semibold text-blue-700">Período Atual:</p>
+                      <p className="text-blue-600">{currentStats.total} tarefas criadas</p>
                     </div>
                     <div>
-                      <p className="font-semibold text-blue-700">Filtrado pela API (updated):</p>
-                      <p className="text-blue-600">{issues.length}</p>
+                      <p className="font-semibold text-blue-700">Período Anterior:</p>
+                      <p className="text-blue-600">{previousStats.total} tarefas criadas</p>
                     </div>
                     <div>
-                      <p className="font-semibold text-blue-700">Período Ativo:</p>
-                      <p className="text-blue-600">{getPeriodDescription(filters.timePeriod)}</p>
+                      <p className="font-semibold text-blue-700">Mudança Total:</p>
+                      <p className="text-blue-600">{changes.total > 0 ? '+' : ''}{changes.total}%</p>
                     </div>
                     <div>
-                      <p className="font-semibold text-blue-700">Modo de Cálculo:</p>
-                      <p className="text-blue-600">Data de criação</p>
+                      <p className="font-semibold text-blue-700">Comparação com:</p>
+                      <p className="text-blue-600">
+                        {filters.timePeriod === 'week' ? 'Semana anterior' : 
+                         filters.timePeriod === 'month' ? 'Mês anterior' : 
+                         filters.timePeriod === 'quarter' ? 'Trimestre anterior' : 'N/A'}
+                      </p>
                     </div>
                     <div>
                       <p className="font-semibold text-blue-700">Story Points (Semana):</p>
