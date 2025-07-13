@@ -82,35 +82,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Add time period filter
       if (filters?.timePeriod && filters.timePeriod !== "all") {
         let dateFilter = "";
-        const now = new Date();
         
         switch (filters.timePeriod) {
           case "week":
-            // Esta semana: desde o início da semana (domingo) até agora
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay());
-            startOfWeek.setHours(0, 0, 0, 0);
-            dateFilter = ` AND created >= "${startOfWeek.toISOString().split('T')[0]}"`;
+            // Esta semana: últimos 7 dias de atividade
+            dateFilter = ` AND updated >= -1w`;
             break;
           case "month":
-            // Este mês: desde o início do mês até agora
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            dateFilter = ` AND created >= "${startOfMonth.toISOString().split('T')[0]}"`;
+            // Este mês: último mês de atividade
+            dateFilter = ` AND updated >= -1M`;
             break;
           case "quarter":
-            // Trimestre: últimos 3 meses
-            const startOfQuarter = new Date(now);
-            startOfQuarter.setMonth(now.getMonth() - 3);
-            dateFilter = ` AND created >= "${startOfQuarter.toISOString().split('T')[0]}"`;
+            // Trimestre: últimos 3 meses de atividade
+            dateFilter = ` AND updated >= -3M`;
             break;
           case "custom":
             // Handle custom date range - usar apenas as datas selecionadas
             if (filters.customStartDate && filters.customEndDate) {
-              dateFilter = ` AND created >= "${filters.customStartDate}" AND created <= "${filters.customEndDate}"`;
+              dateFilter = ` AND updated >= "${filters.customStartDate}" AND updated <= "${filters.customEndDate}"`;
             } else if (filters.customStartDate) {
-              dateFilter = ` AND created >= "${filters.customStartDate}"`;
+              dateFilter = ` AND updated >= "${filters.customStartDate}"`;
             } else if (filters.customEndDate) {
-              dateFilter = ` AND created <= "${filters.customEndDate}"`;
+              dateFilter = ` AND updated <= "${filters.customEndDate}"`;
             }
             break;
         }
