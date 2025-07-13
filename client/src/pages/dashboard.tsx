@@ -3,7 +3,9 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Rocket, Clock, Bug, Lightbulb, TrendingUp, Loader2, Columns3 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, Rocket, Clock, Bug, Lightbulb, TrendingUp, Loader2, Columns3, Calendar, User, FileText, Tag } from "lucide-react";
 
 import { Header } from "@/components/header";
 import { Sidebar } from "@/components/sidebar";
@@ -23,13 +25,15 @@ import {
 } from "@/hooks/use-jira-data";
 import { exportUtils } from "@/lib/export-utils";
 
-import type { JiraProject, DashboardFilters } from "@/types/jira";
+import type { JiraProject, DashboardFilters, JiraIssue } from "@/types/jira";
 
 export default function DashboardPage() {
   const [, setLocation] = useLocation();
   const { credentials, logout, loadStoredCredentials } = useJiraAuth();
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(null);
   const [aiEnabled, setAIEnabled] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<JiraIssue | null>(null);
+  const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [filters, setFilters] = useState<DashboardFilters>({
     timePeriod: "all", // Padrão agora é "Todo Período"
     sprint: undefined,
@@ -147,6 +151,11 @@ export default function DashboardPage() {
   const handleLogout = () => {
     logout();
     setLocation("/");
+  };
+
+  const handleTaskClick = (task: JiraIssue) => {
+    setSelectedTask(task);
+    setIsTaskDialogOpen(true);
   };
 
   const handleExportCSV = () => {
@@ -390,10 +399,14 @@ export default function DashboardPage() {
                         </thead>
                         <tbody>
                           {completedTasks.map((task) => (
-                            <tr key={task.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <tr 
+                              key={task.id} 
+                              className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
+                              onClick={() => handleTaskClick(task)}
+                            >
                               <td className="p-3">
                                 <div>
-                                  <div className="font-medium text-gray-900">{task.key}</div>
+                                  <div className="font-medium text-blue-600">{task.key}</div>
                                   <div className="text-sm text-gray-600 truncate max-w-md" title={task.fields.summary}>
                                     {task.fields.summary}
                                   </div>
@@ -504,6 +517,131 @@ export default function DashboardPage() {
           )}
         </main>
       </div>
+
+      {/* Task Details Dialog */}
+      <Dialog open={isTaskDialogOpen} onOpenChange={setIsTaskDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          {selectedTask && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <FileText className="text-blue-600" size={20} />
+                  {selectedTask.key}: {selectedTask.fields.summary}
+                </DialogTitle>
+              </DialogHeader>
+              
+              <div className="space-y-6">
+                {/* Status and Type */}
+                <div className="flex gap-4">
+                  <div className="flex items-center gap-2">
+                    <Tag className="text-gray-500" size={16} />
+                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                      {selectedTask.fields.status.name}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary">
+                      {selectedTask.fields.issuetype.name}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Assignee */}
+                <div className="flex items-center gap-3">
+                  <User className="text-gray-500" size={16} />
+                  <div>
+                    <div className="font-medium text-gray-900">
+                      {selectedTask.fields.assignee?.displayName || 'Não atribuído'}
+                    </div>
+                    {selectedTask.fields.assignee?.emailAddress && (
+                      <div className="text-sm text-gray-600">
+                        {selectedTask.fields.assignee.emailAddress}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dates */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="text-gray-500" size={16} />
+                    <div>
+                      <div className="text-sm text-gray-600">Data de Criação</div>
+                      <div className="font-medium">
+                        {new Date(selectedTask.fields.created).toLocaleDateString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit', 
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedTask.fields.resolutiondate && (
+                    <div className="flex items-center gap-3">
+                      <CheckCircle className="text-green-500" size={16} />
+                      <div>
+                        <div className="text-sm text-gray-600">Data de Resolução</div>
+                        <div className="font-medium text-green-600">
+                          {new Date(selectedTask.fields.resolutiondate).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Story Points */}
+                {selectedTask.fields.customfield_10016 && (
+                  <div className="flex items-center gap-3">
+                    <TrendingUp className="text-blue-500" size={16} />
+                    <div>
+                      <div className="text-sm text-gray-600">Story Points</div>
+                      <div className="font-medium">{selectedTask.fields.customfield_10016}</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Last Updated */}
+                <div className="flex items-center gap-3">
+                  <Clock className="text-gray-500" size={16} />
+                  <div>
+                    <div className="text-sm text-gray-600">Última Atualização</div>
+                    <div className="font-medium">
+                      {new Date(selectedTask.fields.updated).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Summary */}
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Resumo</h4>
+                  <p className="text-gray-700 leading-relaxed">{selectedTask.fields.summary}</p>
+                </div>
+
+                {/* Task ID and Link */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="text-sm text-gray-600 mb-1">ID da Tarefa</div>
+                  <div className="font-mono text-sm text-blue-600">{selectedTask.key}</div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Footer
         lastUpdate={new Date().toLocaleString()}
