@@ -90,11 +90,13 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Sprints</SelectItem>
-              {sprints.map((sprint) => (
+              {sprints && sprints.length > 0 ? sprints.map((sprint) => (
                 <SelectItem key={sprint.id} value={sprint.id.toString()}>
                   {sprint.name} {sprint.state === "active" ? "(Current)" : ""}
                 </SelectItem>
-              ))}
+              )) : (
+                <SelectItem value="no-sprints" disabled>No sprints found</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -111,11 +113,18 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Developers</SelectItem>
-              {teamMembers.map((member) => (
-                <SelectItem key={member.accountId} value={member.emailAddress}>
-                  {member.displayName}
+              {teamMembers && teamMembers.length > 0 ? teamMembers
+                .filter(member => member.accountId && (member.emailAddress || member.displayName))
+                .map((member) => (
+                <SelectItem 
+                  key={member.accountId} 
+                  value={member.emailAddress || member.accountId}
+                >
+                  {member.displayName || member.emailAddress || "Unknown User"}
                 </SelectItem>
-              ))}
+              )) : (
+                <SelectItem value="no-members" disabled>No team members found</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -124,7 +133,9 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-3">Issue Type</label>
           <div className="space-y-2">
-            {issueTypes.map((issueType) => (
+            {issueTypes && issueTypes.length > 0 ? issueTypes
+              .filter(issueType => issueType && issueType.trim().length > 0)
+              .map((issueType) => (
               <div key={issueType} className="flex items-center space-x-2">
                 <Checkbox
                   id={issueType}
@@ -137,7 +148,9 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials
                   {issueType}
                 </label>
               </div>
-            ))}
+            )) : (
+              <div className="text-sm text-gray-500">No issue types found</div>
+            )}
           </div>
         </div>
 
