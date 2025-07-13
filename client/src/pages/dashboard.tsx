@@ -31,7 +31,7 @@ export default function DashboardPage() {
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(null);
   const [aiEnabled, setAIEnabled] = useState(false);
   const [filters, setFilters] = useState<DashboardFilters>({
-    timePeriod: "week",
+    timePeriod: "custom", // Usar custom para não aplicar filtros de data inicialmente
     sprint: undefined,
     assignee: undefined,
     issueTypes: [],

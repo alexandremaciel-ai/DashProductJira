@@ -14,9 +14,18 @@ export function CompletionCharts({ issues }: CompletionChartsProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("week");
 
   const completionData = useMemo(() => {
-    const completedIssues = issues.filter(issue => 
-      issue.fields.resolutiondate && issue.fields.status.statusCategory.name === "Done"
-    );
+    // Filtrar tarefas concluídas - usar tanto resolutiondate quanto status
+    const completedIssues = issues.filter(issue => {
+      const isDone = issue.fields.status.statusCategory.key === "done" || 
+                    issue.fields.status.statusCategory.name === "Done" ||
+                    issue.fields.status.name.toLowerCase().includes("concluído") ||
+                    issue.fields.status.name.toLowerCase().includes("done") ||
+                    issue.fields.status.name.toLowerCase().includes("fechado") ||
+                    issue.fields.status.name.toLowerCase().includes("resolvido");
+      
+      // Se tem data de resolução, usar ela; senão usar data de atualização para tarefas Done
+      return isDone && (issue.fields.resolutiondate || issue.fields.updated);
+    });
 
     const now = new Date();
     const data: Record<string, number> = {};
@@ -31,7 +40,9 @@ export function CompletionCharts({ issues }: CompletionChartsProps) {
       }
 
       completedIssues.forEach(issue => {
-        const resolvedDate = new Date(issue.fields.resolutiondate!);
+        // Usar resolutiondate se disponível, senão usar updated
+        const dateToUse = issue.fields.resolutiondate || issue.fields.updated;
+        const resolvedDate = new Date(dateToUse);
         const key = resolvedDate.toISOString().split('T')[0];
         if (data.hasOwnProperty(key)) {
           data[key]++;
@@ -55,7 +66,8 @@ export function CompletionCharts({ issues }: CompletionChartsProps) {
       }
 
       completedIssues.forEach(issue => {
-        const resolvedDate = new Date(issue.fields.resolutiondate!);
+        const dateToUse = issue.fields.resolutiondate || issue.fields.updated;
+        const resolvedDate = new Date(dateToUse);
         const weekStart = new Date(resolvedDate);
         weekStart.setDate(weekStart.getDate() - weekStart.getDay());
         const key = `${weekStart.getFullYear()}-W${Math.ceil(weekStart.getDate() / 7)}`;
@@ -79,7 +91,8 @@ export function CompletionCharts({ issues }: CompletionChartsProps) {
       }
 
       completedIssues.forEach(issue => {
-        const resolvedDate = new Date(issue.fields.resolutiondate!);
+        const dateToUse = issue.fields.resolutiondate || issue.fields.updated;
+        const resolvedDate = new Date(dateToUse);
         const key = `${resolvedDate.getFullYear()}-${String(resolvedDate.getMonth() + 1).padStart(2, '0')}`;
         if (data.hasOwnProperty(key)) {
           data[key]++;
@@ -111,111 +124,120 @@ export function CompletionCharts({ issues }: CompletionChartsProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Gráfico de Barras - Conclusões */}
-      <Card className="border border-gray-200">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">Tarefas Concluídas {getTimeRangeLabel()}</CardTitle>
-            <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="day">Diário</SelectItem>
-                <SelectItem value="week">Semanal</SelectItem>
-                <SelectItem value="month">Mensal</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
-            <span>Total: {totalCompleted} tarefas</span>
-            <span>•</span>
-            <span>Média: {avgPerPeriod.toFixed(1)} {getTimeRangeLabel().toLowerCase()}</span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={completionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis 
-                  dataKey="name" 
-                  stroke="#525252"
-                  fontSize={12}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                />
-                <YAxis 
-                  stroke="#525252"
-                  fontSize={12}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: "white",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                  }}
-                  formatter={(value) => [`${value} tarefas`, 'Concluídas']}
-                />
-                <Bar 
-                  dataKey="value" 
-                  fill="#10b981"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      {/* Debug info */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <p className="text-sm text-green-800">
+          <strong>Dados encontrados:</strong> {issues.length} tarefas totais, {completionData.reduce((sum, item) => sum + item.value, 0)} concluídas
+        </p>
+      </div>
 
-      {/* Gráfico de Linha - Tendência */}
-      <Card className="border border-gray-200">
-        <CardHeader>
-          <CardTitle className="text-lg">Tendência de Conclusões</CardTitle>
-          <p className="text-sm text-gray-600">
-            Visualização da evolução das conclusões ao longo do tempo
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={completionData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                <XAxis 
-                  dataKey="name" 
-                  stroke="#525252"
-                  fontSize={12}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                />
-                <YAxis 
-                  stroke="#525252"
-                  fontSize={12}
-                />
-                <Tooltip 
-                  contentStyle={{
-                    backgroundColor: "white",
-                    border: "1px solid #e0e0e0",
-                    borderRadius: "8px",
-                  }}
-                  formatter={(value) => [`${value} tarefas`, 'Concluídas']}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#3b82f6" 
-                  strokeWidth={2}
-                  dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Gráfico de Barras - Conclusões */}
+        <Card className="border border-gray-200">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Tarefas Concluídas {getTimeRangeLabel()}</CardTitle>
+              <Select value={timeRange} onValueChange={(value: TimeRange) => setTimeRange(value)}>
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="day">Diário</SelectItem>
+                  <SelectItem value="week">Semanal</SelectItem>
+                  <SelectItem value="month">Mensal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center space-x-4 text-sm text-gray-600">
+              <span>Total: {totalCompleted} tarefas</span>
+              <span>•</span>
+              <span>Média: {avgPerPeriod.toFixed(1)} {getTimeRangeLabel().toLowerCase()}</span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={completionData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#525252"
+                    fontSize={12}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis 
+                    stroke="#525252"
+                    fontSize={12}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: "white",
+                      border: "1px solid #e0e0e0",
+                      borderRadius: "8px",
+                    }}
+                    formatter={(value) => [`${value} tarefas`, 'Concluídas']}
+                  />
+                  <Bar 
+                    dataKey="value" 
+                    fill="#10b981"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Linha - Tendência */}
+        <Card className="border border-gray-200">
+          <CardHeader>
+            <CardTitle className="text-lg">Tendência de Conclusões</CardTitle>
+            <p className="text-sm text-gray-600">
+              Visualização da evolução das conclusões ao longo do tempo
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={completionData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke="#525252"
+                    fontSize={12}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis 
+                    stroke="#525252"
+                    fontSize={12}
+                  />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: "white",
+                      border: "1px solid #e0e0e0",
+                      borderRadius: "8px",
+                    }}
+                    formatter={(value) => [`${value} tarefas`, 'Concluídas']}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#3b82f6" 
+                    strokeWidth={2}
+                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
