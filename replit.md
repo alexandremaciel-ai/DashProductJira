@@ -16,6 +16,7 @@ Default view: Changed to "Todo Período" to show all data by default.
 Card consistency: Fixed discrepancy between card statistics and kanban board data - both now show tasks created in selected period.
 Advanced cards: Kanban now uses same professional MetricsCard components as dashboard with comparison statistics.
 Professional charts: Implemented 4-tab chart system with Velocity Chart, Cycle Time Analysis, Team Performance, and Issue Type Distribution.
+Complete documentation: Created comprehensive docs folder with 9 essential documents covering all aspects of the project.
 
 ## System Architecture
 
@@ -114,6 +115,24 @@ Professional charts: Implemented 4-tab chart system with Velocity Chart, Cycle T
 - **Jira Cloud**: REST API v3 for project and issue data
 - **AI Services**: Placeholder for OpenAI or similar LLM integration
 - **Export Services**: Client-side PDF/CSV generation
+
+## Documentation Structure
+
+### Comprehensive Documentation Suite
+The project now includes a complete documentation suite in the `/docs` folder:
+
+- **README.md**: Main project overview with quick start guide and deployment options
+- **USER_GUIDE.md**: Complete user tutorial with step-by-step instructions for all features
+- **PRD.md**: Product Requirements Document with objectives, features, and roadmap
+- **ARCHITECTURE.md**: Detailed system design, component structure, and data flows
+- **TECH_STACK.md**: Complete technology stack documentation with versions and justifications
+- **API_DOCUMENTATION.md**: Comprehensive API reference with endpoints, examples, and error codes
+- **DEPLOYMENT_GUIDE.md**: Production deployment instructions for multiple platforms
+- **CONTRIBUTING.md**: Development guidelines and contribution process for open source
+- **SECURITY.md**: Security policies, vulnerability reporting, and best practices
+- **INDEX.md**: Documentation navigation hub and organization guide
+
+This documentation covers all aspects from user onboarding to technical implementation, ensuring the project is accessible to users, developers, and stakeholders.
 
 ## Deployment Strategy
 
