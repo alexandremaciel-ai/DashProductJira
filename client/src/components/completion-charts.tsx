@@ -51,15 +51,23 @@ export function CompletionCharts({ issues }: CompletionChartsProps) {
       
       if (data[key]) {
         data[key].issues++;
-        data[key].storyPoints += issue.fields.customfield_10016 || 1; // Story points ou 1 como default
+        // Validar e limpar story points
+        const storyPoints = issue.fields.customfield_10016;
+        const validStoryPoints = (typeof storyPoints === 'number' && !isNaN(storyPoints) && storyPoints > 0) ? storyPoints : 1;
+        data[key].storyPoints += validStoryPoints;
       }
     });
 
-    return Object.entries(data).map(([week, values]) => ({
+    const result = Object.entries(data).map(([week, values]) => ({
       name: week,
       storyPoints: values.storyPoints,
       issues: values.issues
     }));
+
+    // Debug: Log para verificar os dados do velocity
+    console.log("Velocity Data Debug:", result);
+    
+    return result;
   }, [issues]);
 
   // Cycle Time Data
@@ -390,9 +398,11 @@ export function CompletionCharts({ issues }: CompletionChartsProps) {
                       labelStyle={{ color: '#374151' }}
                       contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}
                       formatter={(value, name) => {
-                        if (name === 'storyPoints') return [`${value}`, 'Story Points'];
-                        if (name === 'issues') return [`${value}`, 'Issues'];
-                        return [`${value}`, name];
+                        // Garantir que value é um número limpo
+                        const cleanValue = typeof value === 'number' ? value : parseInt(String(value).replace(/[^\d]/g, '')) || 0;
+                        if (name === 'storyPoints') return [`${cleanValue}`, 'Story Points'];
+                        if (name === 'issues') return [`${cleanValue}`, 'Issues'];
+                        return [`${cleanValue}`, name];
                       }}
                     />
                     <Bar dataKey="storyPoints" fill="#3b82f6" name="Story Points" radius={[4, 4, 0, 0]} />
