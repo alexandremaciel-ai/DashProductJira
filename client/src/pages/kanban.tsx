@@ -292,11 +292,13 @@ export default function KanbanPage() {
     filter: filters.timePeriod,
     totalCreatedInPeriod: tasksCreatedInPeriod.length,
     totalFilteredByAPI: issues.length,
+    totalAllIssues: allIssues?.length || 0,
     todoCount: stats.todo,
     inProgressCount: stats.inProgress,
     doneCount: stats.done,
     thisWeekCount: stats.thisWeek,
-    changes: changes
+    changes: changes,
+    cardLimit: Math.min(stats.total, 100) // Investigate if there's a limit
   });
 
   if (!credentials || !selectedProject) {

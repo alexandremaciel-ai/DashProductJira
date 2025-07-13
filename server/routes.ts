@@ -140,6 +140,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       console.log("Issues found:", response.data.total);
+      console.log("Issues returned:", response.data.issues.length);
+      console.log("Start at:", response.data.startAt);
+      console.log("Max results:", response.data.maxResults);
+      
       res.json(response.data);
     } catch (error: any) {
       console.error("Error fetching issues:", error.response?.data || error.message);
