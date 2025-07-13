@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -76,16 +76,33 @@ export default function DashboardPage() {
   // AI Insights
   const { data: aiInsights, isLoading: aiLoading } = useAIInsights(metrics, aiEnabled);
 
-  // Chart data
-  const taskEvolutionData = [
-    { name: "Mon", value: 12 },
-    { name: "Tue", value: 15 },
-    { name: "Wed", value: 8 },
-    { name: "Thu", value: 18 },
-    { name: "Fri", value: 14 },
-    { name: "Sat", value: 6 },
-    { name: "Sun", value: 4 },
-  ];
+  // Chart data - dynamic task evolution based on real data
+  const taskEvolutionData = useMemo(() => {
+    if (!issues.length) return [];
+    
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      return date;
+    });
+
+    return last7Days.map(date => {
+      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // Count issues resolved on this day
+      const resolvedOnDay = issues.filter(issue => {
+        if (!issue.fields.resolutiondate) return false;
+        const resolvedDate = new Date(issue.fields.resolutiondate);
+        return resolvedDate.toISOString().split('T')[0] === dateStr;
+      }).length;
+
+      return {
+        name: dayName,
+        value: resolvedOnDay
+      };
+    });
+  }, [issues]);
 
   const issueDistributionData = [
     { name: "Done", value: issues.filter(i => i.fields.status.statusCategory.name === "Done").length },
@@ -216,6 +233,33 @@ export default function DashboardPage() {
                   iconBgColor="bg-red-100"
                 />
               </div>
+
+              {/* Debug Card - Metrics Breakdown */}
+              <Card className="border border-blue-200 bg-blue-50 mb-6">
+                <CardHeader>
+                  <CardTitle className="text-lg text-blue-800">Debug: Dados Calculados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <p className="font-semibold text-blue-700">Total de Tarefas:</p>
+                      <p className="text-blue-600">{issues.length}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-700">Tarefas Concluídas (Semana):</p>
+                      <p className="text-blue-600">{metrics.tasksDelivered}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-700">Story Points (Semana):</p>
+                      <p className="text-blue-600">{metrics.velocity}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-700">Tipos de Issue:</p>
+                      <p className="text-blue-600">{[...new Set(issues.map(i => i.fields.issuetype.name))].join(", ")}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Charts Section */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
