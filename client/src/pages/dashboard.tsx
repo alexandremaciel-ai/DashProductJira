@@ -244,7 +244,7 @@ export default function DashboardPage() {
           {issuesLoading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="animate-spin" size={32} />
-              <span className="ml-2">Loading dashboard data...</span>
+              <span className="ml-2">Carregando dados do dashboard...</span>
             </div>
           ) : (
             <>
@@ -262,35 +262,35 @@ export default function DashboardPage() {
               {/* Metrics Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <MetricsCard
-                  title="Tasks Delivered"
+                  title="Tarefas Entregues"
                   value={metrics.tasksDelivered}
                   change={metrics.tasksDeliveredChange}
                   icon={<CheckCircle className="text-green-600" size={20} />}
-                  description="Issues resolved this week"
+                  description="Issues resolvidas esta semana"
                   iconBgColor="bg-green-100"
                 />
                 <MetricsCard
-                  title="Team Velocity"
+                  title="Velocidade da Equipe"
                   value={metrics.velocity}
                   change={metrics.velocityChange}
                   icon={<Rocket className="text-blue-600" size={20} />}
-                  description="Story points this sprint"
+                  description="Story points neste sprint"
                   iconBgColor="bg-blue-100"
                 />
                 <MetricsCard
-                  title="Avg. Cycle Time"
-                  value={`${metrics.cycleTime} days`}
+                  title="Tempo Médio de Ciclo"
+                  value={`${metrics.cycleTime} dias`}
                   change={metrics.cycleTimeChange}
                   icon={<Clock className="text-yellow-600" size={20} />}
-                  description="Days per task"
+                  description="Dias por tarefa"
                   iconBgColor="bg-yellow-100"
                 />
                 <MetricsCard
-                  title="Bug Rate"
+                  title="Taxa de Bugs"
                   value={`${metrics.bugRate}%`}
                   change={metrics.bugRateChange}
                   icon={<Bug className="text-red-600" size={20} />}
-                  description="Bugs vs total issues"
+                  description="Bugs vs total de issues"
                   iconBgColor="bg-red-100"
                 />
               </div>
@@ -343,21 +343,21 @@ export default function DashboardPage() {
                 <Card className="border border-gray-200">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Tasks Evolution</CardTitle>
+                      <CardTitle className="text-lg">Evolução de Tarefas</CardTitle>
                       <div className="flex items-center space-x-2">
-                        <button className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg">Week</button>
-                        <button className="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-lg">Month</button>
+                        <button className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg">Semana</button>
+                        <button className="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-lg">Mês</button>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <TaskEvolutionChart data={taskEvolutionData} title="Tasks Evolution" />
+                    <TaskEvolutionChart data={taskEvolutionData} title="Evolução de Tarefas" />
                   </CardContent>
                 </Card>
 
                 <Card className="border border-gray-200">
                   <CardHeader>
-                    <CardTitle className="text-lg">Issue Distribution</CardTitle>
+                    <CardTitle className="text-lg">Distribuição de Issues</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <IssueDistributionChart data={issueDistributionData} />
@@ -369,13 +369,13 @@ export default function DashboardPage() {
               <Card className="border border-gray-200 mb-8">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Developer Productivity</CardTitle>
+                    <CardTitle className="text-lg">Produtividade dos Desenvolvedores</CardTitle>
                     <Select value={productivityMetric} onValueChange={(value: "issues" | "storyPoints") => setProductivityMetric(value)}>
                       <SelectTrigger className="w-48">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="issues">Issues Resolved</SelectItem>
+                        <SelectItem value="issues">Issues Resolvidas</SelectItem>
                         <SelectItem value="storyPoints">Story Points</SelectItem>
                       </SelectContent>
                     </Select>
@@ -395,25 +395,25 @@ export default function DashboardPage() {
                         <Lightbulb className="text-white" size={20} />
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">AI-Powered Insights</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Insights com IA</h3>
                         {aiLoading ? (
                           <div className="flex items-center">
                             <Loader2 className="animate-spin mr-2" size={16} />
-                            <span>Generating insights...</span>
+                            <span>Gerando insights...</span>
                           </div>
                         ) : aiInsights ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="bg-white rounded-lg p-4 border border-gray-200">
                               <h4 className="font-medium text-gray-900 mb-2">
                                 <Lightbulb className="inline text-yellow-500 mr-2" size={16} />
-                                Performance Insights
+                                Insights de Performance
                               </h4>
                               <p className="text-sm text-gray-600">{aiInsights.performance}</p>
                             </div>
                             <div className="bg-white rounded-lg p-4 border border-gray-200">
                               <h4 className="font-medium text-gray-900 mb-2">
                                 <TrendingUp className="inline text-green-500 mr-2" size={16} />
-                                Predictions
+                                Previsões
                               </h4>
                               <p className="text-sm text-gray-600">{aiInsights.predictions}</p>
                             </div>

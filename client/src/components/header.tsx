@@ -26,7 +26,7 @@ export function Header({
               <ChartLine className="text-white text-sm" size={16} />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">Productivity Dashboard</h1>
+              <h1 className="text-lg font-semibold text-gray-900">Dashboard de Produtividade</h1>
               <p className="text-xs text-gray-600">{projectName}</p>
             </div>
           </div>
@@ -39,14 +39,14 @@ export function Header({
               className="text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100"
             >
               <ArrowLeftRight className="mr-2" size={14} />
-              Switch Project
+              Trocar Projeto
             </Button>
           </div>
         </div>
 
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <label className="text-sm text-gray-600">AI Analysis</label>
+            <label className="text-sm text-gray-600">Análise IA</label>
             <Switch
               checked={aiEnabled}
               onCheckedChange={onAIToggle}

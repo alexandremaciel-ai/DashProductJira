@@ -22,10 +22,10 @@ interface SidebarProps {
 
 export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, credentials, projectKey, quickStats }: SidebarProps) {
   const timePeriods = [
-    { value: "week", label: "This Week" },
-    { value: "month", label: "This Month" },
-    { value: "quarter", label: "Quarter" },
-    { value: "custom", label: "Custom" },
+    { value: "week", label: "Esta Semana" },
+    { value: "month", label: "Este Mês" },
+    { value: "quarter", label: "Trimestre" },
+    { value: "custom", label: "Personalizado" },
   ] as const;
 
   // Get dynamic status categories and issue types
@@ -72,11 +72,11 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
   return (
     <aside className="w-80 bg-white border-r border-gray-200 min-h-screen">
       <div className="p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">Filters & Analytics</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-6">Filtros e Análises</h2>
         
         {/* Time Period Filter */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-3">Time Period</label>
+          <label className="block text-sm font-medium text-gray-700 mb-3">Período</label>
           <div className="grid grid-cols-2 gap-2">
             {timePeriods.map((period) => (
               <Button
@@ -103,16 +103,16 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
             onValueChange={(value) => onFiltersChange({ ...filters, sprint: value })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="All Sprints" />
+              <SelectValue placeholder="Todos os Sprints" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Sprints</SelectItem>
+              <SelectItem value="all">Todos os Sprints</SelectItem>
               {sprints && sprints.length > 0 ? sprints.map((sprint) => (
                 <SelectItem key={sprint.id} value={sprint.id.toString()}>
-                  {sprint.name} {sprint.state === "active" ? "(Current)" : ""}
+                  {sprint.name} {sprint.state === "active" ? "(Atual)" : ""}
                 </SelectItem>
               )) : (
-                <SelectItem value="no-sprints" disabled>No sprints found</SelectItem>
+                <SelectItem value="no-sprints" disabled>Nenhum sprint encontrado</SelectItem>
               )}
             </SelectContent>
           </Select>
@@ -120,16 +120,16 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
 
         {/* Team Filter */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-3">Team/Developer</label>
+          <label className="block text-sm font-medium text-gray-700 mb-3">Equipe/Desenvolvedor</label>
           <Select 
             value={filters.assignee} 
             onValueChange={(value) => onFiltersChange({ ...filters, assignee: value })}
           >
             <SelectTrigger>
-              <SelectValue placeholder="All Developers" />
+              <SelectValue placeholder="Todos os Desenvolvedores" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Developers</SelectItem>
+              <SelectItem value="all">Todos os Desenvolvedores</SelectItem>
               {teamMembers && teamMembers.length > 0 ? teamMembers
                 .filter(member => member.accountId && member.displayName)
                 .map((member) => (
@@ -140,7 +140,7 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
                   {member.displayName}
                 </SelectItem>
               )) : (
-                <SelectItem value="no-members" disabled>No team members found</SelectItem>
+                <SelectItem value="no-members" disabled>Nenhum membro da equipe encontrado</SelectItem>
               )}
             </SelectContent>
           </Select>
@@ -148,7 +148,7 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
 
         {/* Issue Type Filter */}
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-700 mb-3">Issue Type</label>
+          <label className="block text-sm font-medium text-gray-700 mb-3">Tipo de Issue</label>
           <div className="space-y-2">
             {issueTypes && issueTypes.length > 0 ? issueTypes
               .filter(issueType => issueType && issueType.trim().length > 0)
@@ -166,7 +166,7 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
                 </label>
               </div>
             )) : (
-              <div className="text-sm text-gray-500">No issue types found</div>
+              <div className="text-sm text-gray-500">Nenhum tipo de issue encontrado</div>
             )}
           </div>
         </div>
@@ -174,19 +174,19 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
         {/* Quick Stats */}
         <Card className="bg-gray-50">
           <CardContent className="p-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Quick Stats</h3>
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Estatísticas Rápidas</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Active Issues</span>
+                <span className="text-gray-600">Issues Ativas</span>
                 <span className="font-medium text-gray-900">{quickStats.activeIssues}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Team Members</span>
+                <span className="text-gray-600">Membros da Equipe</span>
                 <span className="font-medium text-gray-900">{quickStats.teamMembers}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-600">Avg. Cycle Time</span>
-                <span className="font-medium text-gray-900">{quickStats.avgCycleTime} days</span>
+                <span className="text-gray-600">Tempo Médio de Ciclo</span>
+                <span className="font-medium text-gray-900">{quickStats.avgCycleTime} dias</span>
               </div>
             </div>
           </CardContent>

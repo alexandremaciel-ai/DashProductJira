@@ -13,9 +13,9 @@ export function Footer({ lastUpdate, onExportCSV, onExportPDF, onGenerateReport 
     <footer className="bg-white border-t border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4 text-sm text-gray-600">
-          <span>Last updated: {lastUpdate}</span>
+          <span>Última atualização: {lastUpdate}</span>
           <span>•</span>
-          <span>Data from: Jira Cloud</span>
+          <span>Dados de: Jira Cloud</span>
         </div>
         
         <div className="flex items-center space-x-3">
@@ -26,7 +26,7 @@ export function Footer({ lastUpdate, onExportCSV, onExportPDF, onGenerateReport 
             className="text-gray-600 hover:text-gray-700"
           >
             <FileSpreadsheet className="mr-2" size={14} />
-            Export CSV
+            Exportar CSV
           </Button>
           <Button 
             variant="outline"
@@ -35,7 +35,7 @@ export function Footer({ lastUpdate, onExportCSV, onExportPDF, onGenerateReport 
             className="text-gray-600 hover:text-gray-700"
           >
             <FileText className="mr-2" size={14} />
-            Export PDF
+            Exportar PDF
           </Button>
           <Button 
             size="sm"
@@ -43,7 +43,7 @@ export function Footer({ lastUpdate, onExportCSV, onExportPDF, onGenerateReport 
             className="bg-blue-600 text-white hover:bg-blue-700"
           >
             <ChartLine className="mr-2" size={14} />
-            Generate Report
+            Gerar Relatório
           </Button>
         </div>
       </div>

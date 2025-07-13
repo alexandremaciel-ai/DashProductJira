@@ -143,9 +143,9 @@ export function CompletionCharts({ issues }: CompletionChartsProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="day">Diário</SelectItem>
-                  <SelectItem value="week">Semanal</SelectItem>
-                  <SelectItem value="month">Mensal</SelectItem>
+                  <SelectItem value="day">Por Dia</SelectItem>
+                  <SelectItem value="week">Por Semana</SelectItem>
+                  <SelectItem value="month">Por Mês</SelectItem>
                 </SelectContent>
               </Select>
             </div>

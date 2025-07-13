@@ -51,8 +51,8 @@ export default function ProjectSelectionPage() {
               <ChartLine className="text-white text-sm" size={16} />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900">Productivity Dashboard</h1>
-              <p className="text-xs text-gray-600">connected to {credentials.jiraUrl}</p>
+              <h1 className="text-lg font-semibold text-gray-900">Dashboard de Produtividade</h1>
+              <p className="text-xs text-gray-600">conectado a {credentials.jiraUrl}</p>
             </div>
           </div>
           <Button 
@@ -62,20 +62,20 @@ export default function ProjectSelectionPage() {
             className="text-gray-600 hover:text-gray-700"
           >
             <LogOut className="mr-2" size={14} />
-            Logout
+            Sair
           </Button>
         </div>
       </header>
 
       <div className="max-w-4xl mx-auto p-6">
         <div className="text-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Select a Project</h2>
-          <p className="text-gray-600">Choose the Jira project you want to analyze</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Selecione um Projeto</h2>
+          <p className="text-gray-600">Escolha o projeto do Jira que você deseja analisar</p>
         </div>
 
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            Error loading projects: {error.message}
+            Erro ao carregar projetos: {error.message}
           </div>
         )}
 

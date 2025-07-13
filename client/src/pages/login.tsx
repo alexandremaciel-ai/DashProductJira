@@ -39,19 +39,19 @@ export default function LoginPage() {
               <div className="w-16 h-16 bg-blue-600 rounded-xl mx-auto mb-4 flex items-center justify-center">
                 <ChartLine className="text-white text-2xl" size={32} />
               </div>
-              <h1 className="text-2xl font-bold text-gray-900 mb-2">Jira Productivity Dashboard</h1>
-              <p className="text-gray-600 text-sm">Connect to your Jira instance to analyze team productivity</p>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">Dashboard de Produtividade Jira</h1>
+              <p className="text-gray-600 text-sm">Conecte-se à sua instância do Jira para analisar a produtividade da equipe</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <Label htmlFor="jiraUrl" className="text-sm font-medium text-gray-700">
-                  Jira Instance URL
+                  URL da Instância Jira
                 </Label>
                 <Input
                   id="jiraUrl"
                   type="url"
-                  placeholder="https://your-company.atlassian.net"
+                  placeholder="https://sua-empresa.atlassian.net"
                   value={credentials.jiraUrl}
                   onChange={(e) => handleInputChange("jiraUrl", e.target.value)}
                   className="mt-2 border-gray-200 focus:ring-blue-600 focus:border-blue-600"
@@ -61,12 +61,12 @@ export default function LoginPage() {
 
               <div>
                 <Label htmlFor="username" className="text-sm font-medium text-gray-700">
-                  Email/Username
+                  Email/Usuário
                 </Label>
                 <Input
                   id="username"
                   type="email"
-                  placeholder="your.email@company.com"
+                  placeholder="seu.email@empresa.com"
                   value={credentials.username}
                   onChange={(e) => handleInputChange("username", e.target.value)}
                   className="mt-2 border-gray-200 focus:ring-blue-600 focus:border-blue-600"
@@ -76,13 +76,13 @@ export default function LoginPage() {
 
               <div>
                 <Label htmlFor="apiToken" className="text-sm font-medium text-gray-700">
-                  API Token
+                  Token da API
                 </Label>
                 <div className="relative mt-2">
                   <Input
                     id="apiToken"
                     type={showPassword ? "text" : "password"}
-                    placeholder="Enter your Jira API token"
+                    placeholder="Digite seu token da API do Jira"
                     value={credentials.apiToken}
                     onChange={(e) => handleInputChange("apiToken", e.target.value)}
                     className="border-gray-200 focus:ring-blue-600 focus:border-blue-600 pr-12"
@@ -105,7 +105,7 @@ export default function LoginPage() {
                     rel="noopener noreferrer"
                     className="text-blue-600 hover:underline"
                   >
-                    How to generate an API token
+                    Como gerar um token da API
                   </a>
                 </p>
               </div>
@@ -118,10 +118,10 @@ export default function LoginPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 animate-spin" size={16} />
-                    Connecting...
+                    Conectando...
                   </>
                 ) : (
-                  "Connect to Jira"
+                  "Conectar ao Jira"
                 )}
               </Button>
             </form>
@@ -129,7 +129,7 @@ export default function LoginPage() {
         </Card>
 
         <div className="text-center mt-6 text-xs text-gray-600">
-          <p>Secure connection • Your credentials are encrypted</p>
+          <p>Conexão segura • Suas credenciais são criptografadas</p>
         </div>
       </div>
     </div>

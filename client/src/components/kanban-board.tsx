@@ -25,21 +25,21 @@ interface KanbanColumn {
 const columns: KanbanColumn[] = [
   {
     id: "todo",
-    title: "To Do",
+    title: "A Fazer",
     statusCategory: "To Do",
     color: "bg-gray-100 border-gray-300",
     icon: <AlertCircle className="text-gray-600" size={16} />
   },
   {
     id: "inprogress",
-    title: "In Progress",
+    title: "Em Progresso",
     statusCategory: "In Progress",
     color: "bg-blue-100 border-blue-300",
     icon: <Clock className="text-blue-600" size={16} />
   },
   {
     id: "done",
-    title: "Done",
+    title: "Concluído",
     statusCategory: "Done",
     color: "bg-green-100 border-green-300",
     icon: <CheckCircle2 className="text-green-600" size={16} />
@@ -250,21 +250,21 @@ export function KanbanBoard({ issues, credentials, projectKey }: KanbanBoardProp
   const dynamicColumns = statusData ? [
     {
       id: "todo",
-      title: "To Do",
+      title: "A Fazer",
       statuses: statusData.statusCategories.todo,
       color: "bg-gray-100 border-gray-300",
       icon: <AlertCircle className="text-gray-600" size={16} />
     },
     {
       id: "inprogress", 
-      title: "In Progress",
+      title: "Em Progresso",
       statuses: statusData.statusCategories.inprogress,
       color: "bg-blue-100 border-blue-300",
       icon: <Clock className="text-blue-600" size={16} />
     },
     {
       id: "done",
-      title: "Done", 
+      title: "Concluído", 
       statuses: statusData.statusCategories.done,
       color: "bg-green-100 border-green-300",
       icon: <CheckCircle2 className="text-green-600" size={16} />
