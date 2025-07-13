@@ -1,0 +1,23 @@
+"Crie uma aplicação web completa em React (usando JSX, Hooks e componentes funcionais) para um dashboard profissional de monitoramento de produtividade de desenvolvedores baseado em dados da API do Jira. A app deve ser responsiva, usar Tailwind CSS para estilização e Recharts para gráficos. Inclua autenticação básica para a API do Jira (usando token ou credenciais do usuário).
+
+Funcionalidades principais:
+
+Tela inicial de login/seleção: O usuário insere credenciais da API do Jira (URL da instância, username e API token). Após login, exiba uma dropdown para selecionar um projeto do Jira (busque a lista de projetos via API).
+Dashboard principal: Após selecionar o projeto, exiba métricas como:
+Tarefas entregues na semana atual (contagem de issues resolvidas).
+Velocity da equipe (pontos de história completados por sprint).
+Tempo médio de ciclo das tarefas.
+Contribuições por desenvolvedor (número de issues resolvidos por dev).
+Taxa de bugs (bugs criados vs. resolvidos).
+Use filtros interativos: por período (semana, mês, trimestre), por sprint, por time ou dev individual, e por tipo de issue.
+Gráficos: Inclua gráficos de linha para evolução de tarefas entregues ao longo do tempo, gráfico de pizza para distribuição de issues por status, e barras para produtividade por dev.
+Geração de relatórios: Botão para gerar e baixar relatórios em PDF ou CSV com as métricas selecionadas, incluindo gráficos e resumos.
+Integração opcional com IA: Adicione um toggle/switch para ativar 'Análise com IA'. Quando ativado, envie os dados das métricas para uma API de LLM (simule com um placeholder para OpenAI ou similar) e exiba insights gerados, como 'Previsões de produtividade para a próxima semana' ou 'Sugestões para melhorar gargalos baseadas nos dados'.
+Estrutura da app:
+
+Use React Router para navegação (páginas: Login, Seleção de Projeto, Dashboard).
+Para fetch de dados, use Axios para chamadas à API do Jira (ex: endpoints como /rest/api/3/search para issues, /rest/api/3/project para projetos).
+Armazene estado com useState e useEffect. Inclua loading states e tratamento de erros.
+Torne a app modular: componentes separados para Header, Sidebar com filtros, Main Dashboard com cards de métricas e gráficos, e Footer com opções de relatório.
+Código deve ser limpo, com comentários, e pronto para rodar com 'npm start'. Forneça o código completo, incluindo package.json com dependências (react, react-dom, axios, recharts, tailwindcss, react-router-dom, jspdf para PDF export).
+O objetivo é medir produtividade de entregas dos devs, então foque em métricas acionáveis e interface intuitiva."
