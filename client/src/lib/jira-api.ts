@@ -62,4 +62,12 @@ export const jiraApi = {
     });
     return response.data;
   },
+
+  async getStatusCategories(credentials: JiraCredentials, projectKey: string): Promise<any> {
+    const response = await api.post("/jira/status-categories", {
+      ...credentials,
+      projectKey,
+    });
+    return response.data;
+  },
 };

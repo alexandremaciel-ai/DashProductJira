@@ -172,6 +172,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // New endpoint to get dynamic status categories and issue types
+  app.post("/api/jira/status-categories", async (req, res) => {
+    try {
+      const { jiraUrl, username, apiToken, projectKey } = req.body;
+      
+      if (!jiraUrl || !username || !apiToken || !projectKey) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Get project statuses
+      const statusesResponse = await axios.get(`${jiraUrl}/rest/api/3/project/${projectKey}/statuses`, {
+        auth: {
+          username,
+          password: apiToken,
+        },
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      const statusesData = statusesResponse.data;
+      
+      // Extract unique statuses across all issue types
+      const allStatuses = new Map();
+      
+      statusesData.forEach((issueType: any) => {
+        issueType.statuses.forEach((status: any) => {
+          if (!allStatuses.has(status.id)) {
+            allStatuses.set(status.id, {
+              id: status.id,
+              name: status.name,
+              statusCategory: status.statusCategory,
+              description: status.description || ''
+            });
+          }
+        });
+      });
+
+      // Group statuses by category
+      const statusCategories: {
+        todo: any[];
+        inprogress: any[];
+        done: any[];
+      } = {
+        todo: [],
+        inprogress: [],
+        done: []
+      };
+
+      allStatuses.forEach((status: any) => {
+        const categoryKey = status.statusCategory.key.toLowerCase();
+        if (categoryKey === 'new') {
+          statusCategories.todo.push(status);
+        } else if (categoryKey === 'indeterminate') {
+          statusCategories.inprogress.push(status);
+        } else if (categoryKey === 'done') {
+          statusCategories.done.push(status);
+        }
+      });
+
+      // Get unique issue types
+      const issueTypes = statusesData.map((issueType: any) => ({
+        id: issueType.id,
+        name: issueType.name,
+        iconUrl: issueType.iconUrl,
+        description: issueType.description || '',
+        subtask: issueType.subtask || false
+      }));
+
+      res.json({
+        statusCategories,
+        issueTypes,
+        allStatuses: Array.from(allStatuses.values())
+      });
+    } catch (error: any) {
+      console.error('Error fetching status categories:', error);
+      res.status(500).json({ 
+        error: error.response?.data?.errorMessages?.[0] || "Failed to fetch status categories" 
+      });
+    }
+  });
+
   app.post("/api/ai/insights", async (req, res) => {
     try {
       const { metrics, projectData } = req.body;

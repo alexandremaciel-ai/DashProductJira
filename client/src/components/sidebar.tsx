@@ -2,13 +2,16 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
-import type { DashboardFilters, JiraSprint, JiraIssue } from "@/types/jira";
+import type { DashboardFilters, JiraSprint, JiraIssue, JiraCredentials } from "@/types/jira";
+import { useJiraStatusCategories } from "@/hooks/use-jira-data";
 
 interface SidebarProps {
   filters: DashboardFilters;
   onFiltersChange: (filters: DashboardFilters) => void;
   sprints: JiraSprint[];
   issues: JiraIssue[];
+  credentials: JiraCredentials;
+  projectKey: string;
   quickStats: {
     activeIssues: number;
     teamMembers: number;
@@ -16,7 +19,7 @@ interface SidebarProps {
   };
 }
 
-export function Sidebar({ filters, onFiltersChange, sprints, issues, quickStats }: SidebarProps) {
+export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials, projectKey, quickStats }: SidebarProps) {
   const timePeriods = [
     { value: "week", label: "This Week" },
     { value: "month", label: "This Month" },
@@ -24,10 +27,14 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, quickStats 
     { value: "custom", label: "Custom" },
   ] as const;
 
-  // Get unique issue types from actual issues
-  const issueTypes = issues && issues.length > 0 
-    ? Array.from(new Set(issues.map(issue => issue.fields.issuetype.name)))
-    : ["Story", "Bug", "Task", "Epic"]; // fallback default types
+  // Get dynamic status categories and issue types
+  const { data: statusData } = useJiraStatusCategories(credentials, projectKey);
+  
+  // Get unique issue types from dynamic data or fallback to issues
+  const issueTypes = statusData?.issueTypes.map(type => type.name) || 
+    (issues && issues.length > 0 
+      ? Array.from(new Set(issues.map(issue => issue.fields.issuetype.name)))
+      : ["Story", "Bug", "Task", "Epic"]); // fallback default types
 
   const handleTimePeriodChange = (period: DashboardFilters["timePeriod"]) => {
     onFiltersChange({ ...filters, timePeriod: period });

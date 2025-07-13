@@ -197,7 +197,11 @@ export default function KanbanPage() {
               </TabsList>
 
               <TabsContent value="kanban">
-                <KanbanBoard issues={issues} />
+                <KanbanBoard 
+                  issues={issues} 
+                  credentials={credentials!} 
+                  projectKey={selectedProject.key} 
+                />
               </TabsContent>
 
               <TabsContent value="charts">

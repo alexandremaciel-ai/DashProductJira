@@ -63,6 +63,20 @@ export function useJiraProjectMetadata(
   });
 }
 
+export function useJiraStatusCategories(
+  credentials: JiraCredentials | null, 
+  projectKey: string | null
+) {
+  return useQuery({
+    queryKey: ["jira", "status-categories", credentials?.jiraUrl, projectKey],
+    queryFn: () => 
+      credentials && projectKey 
+        ? jiraApi.getStatusCategories(credentials, projectKey)
+        : Promise.resolve(null),
+    enabled: !!(credentials && projectKey),
+  });
+}
+
 export function useProductivityMetrics(issues: JiraIssue[]) {
   const [metrics, setMetrics] = useState<ProductivityMetrics>({
     tasksDelivered: 0,

@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Calendar, User, Clock, ArrowRight, Bug, CheckCircle2, AlertCircle } from "lucide-react";
-import type { JiraIssue } from "@/types/jira";
+import type { JiraIssue, JiraCredentials } from "@/types/jira";
+import { useJiraStatusCategories } from "@/hooks/use-jira-data";
 
 interface KanbanBoardProps {
   issues: JiraIssue[];
+  credentials: JiraCredentials;
+  projectKey: string;
 }
 
 interface KanbanColumn {
@@ -236,21 +239,57 @@ function TaskCard({ issue }: { issue: JiraIssue }) {
   );
 }
 
-export function KanbanBoard({ issues }: KanbanBoardProps) {
-  // Debug: log the unique statuses to understand the data structure
-  const uniqueStatuses = [...new Set(issues.map(issue => 
-    `${issue.fields.status.name} (${issue.fields.status.statusCategory.name})`
-  ))];
+export function KanbanBoard({ issues, credentials, projectKey }: KanbanBoardProps) {
+  // Get dynamic status categories from API
+  const { data: statusData, isLoading: statusLoading } = useJiraStatusCategories(credentials, projectKey);
   
-  console.log("Unique statuses found:", uniqueStatuses);
+  console.log("Status data:", statusData);
   console.log("Total issues:", issues.length);
 
+  // Create dynamic columns based on actual project statuses
+  const dynamicColumns = statusData ? [
+    {
+      id: "todo",
+      title: "To Do",
+      statuses: statusData.statusCategories.todo,
+      color: "bg-gray-100 border-gray-300",
+      icon: <AlertCircle className="text-gray-600" size={16} />
+    },
+    {
+      id: "inprogress", 
+      title: "In Progress",
+      statuses: statusData.statusCategories.inprogress,
+      color: "bg-blue-100 border-blue-300",
+      icon: <Clock className="text-blue-600" size={16} />
+    },
+    {
+      id: "done",
+      title: "Done", 
+      statuses: statusData.statusCategories.done,
+      color: "bg-green-100 border-green-300",
+      icon: <CheckCircle2 className="text-green-600" size={16} />
+    }
+  ] : columns;
+
+  const getIssuesByStatusCategory = (statusList: any[]) => {
+    if (!statusList || statusList.length === 0) return [];
+    
+    const statusIds = statusList.map(s => s.id);
+    return issues.filter(issue => statusIds.includes(issue.fields.status.id));
+  };
+
   const getIssuesByStatus = (statusCategory: string) => {
+    if (statusData) {
+      // Use dynamic status mapping
+      const statusList = statusData.statusCategories[statusCategory.toLowerCase()];
+      return getIssuesByStatusCategory(statusList);
+    }
+    
+    // Fallback to original logic
     return issues.filter(issue => {
       const statusCategoryName = issue.fields.status.statusCategory.name;
       const statusName = issue.fields.status.name.toLowerCase();
       
-      // Mapeamento mais flexível para diferentes instâncias do Jira
       if (statusCategory === "To Do") {
         return statusCategoryName === "To Do" || 
                statusCategoryName === "new" ||
@@ -282,24 +321,41 @@ export function KanbanBoard({ issues }: KanbanBoardProps) {
     });
   };
 
-  // Se não há tarefas mapeadas, mostrar todas as tarefas na primeira coluna para debug
-  const allMappedIssues = columns.reduce((acc, col) => acc + getIssuesByStatus(col.statusCategory).length, 0);
-  
+  if (statusLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-sm text-gray-600">Carregando status do projeto...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate mapped issues count
+  const allMappedIssues = dynamicColumns.reduce((acc, col) => {
+    const columnIssues = statusData 
+      ? getIssuesByStatusCategory(col.statuses)
+      : getIssuesByStatus(col.title);
+    return acc + columnIssues.length;
+  }, 0);
+
   return (
     <div className="space-y-4">
       {/* Debug info para entender os dados */}
-      {allMappedIssues === 0 && issues.length > 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <p className="text-sm text-yellow-800">
-            <strong>Debug:</strong> Encontradas {issues.length} tarefas, mas nenhuma foi mapeada para as colunas. 
-            Status encontrados: {uniqueStatuses.join(", ")}
+      {statusData && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-800">
+            <strong>Status dinâmicos carregados:</strong> {statusData.allStatuses.length} status encontrados para este projeto.
           </p>
         </div>
       )}
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {columns.map(column => {
-          const columnIssues = getIssuesByStatus(column.statusCategory);
+        {dynamicColumns.map(column => {
+          const columnIssues = statusData 
+            ? getIssuesByStatusCategory(column.statuses)
+            : getIssuesByStatus(column.title);
           
           return (
             <Card key={column.id} className={`${column.color} min-h-[400px]`}>
@@ -313,6 +369,11 @@ export function KanbanBoard({ issues }: KanbanBoardProps) {
                     {columnIssues.length}
                   </Badge>
                 </CardTitle>
+                {statusData && column.statuses.length > 0 && (
+                  <div className="text-xs text-gray-600">
+                    Status: {column.statuses.map(s => s.name).join(", ")}
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="pt-0">
                 <ScrollArea className="h-[500px] pr-2">
@@ -331,24 +392,6 @@ export function KanbanBoard({ issues }: KanbanBoardProps) {
           );
         })}
       </div>
-      
-      {/* Mostrar todas as tarefas que não foram mapeadas */}
-      {allMappedIssues === 0 && issues.length > 0 && (
-        <Card className="border-2 border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-orange-800">
-              Todas as Tarefas (não mapeadas)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[400px] pr-2">
-              {issues.map(issue => (
-                <TaskCard key={issue.id} issue={issue} />
-              ))}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

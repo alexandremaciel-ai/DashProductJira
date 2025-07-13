@@ -157,6 +157,8 @@ export default function DashboardPage() {
           onFiltersChange={setFilters}
           sprints={sprints || []}
           issues={issues}
+          credentials={credentials!}
+          projectKey={selectedProject?.key || ''}
           quickStats={quickStats}
         />
 
