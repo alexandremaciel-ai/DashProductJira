@@ -203,9 +203,47 @@ export default function DashboardPage() {
     return text.trim();
   };
 
-  const handleTaskClick = (task: JiraIssue) => {
-    console.log('Selected task:', task); // Debug para ver a estrutura
-    console.log('Description field:', task.fields.description); // Debug específico da descrição
+  const debugTask = async (taskKey: string) => {
+    if (!credentials) return;
+    
+    try {
+      const response = await fetch('/api/jira/debug-issue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...credentials,
+          issueKey: taskKey
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`Complete structure for ${taskKey}:`, data);
+        console.log('All fields:', Object.keys(data.fields || {}));
+        console.log('Description field:', data.fields?.description);
+        
+        // Procurar por possíveis campos de descrição
+        const possibleDescriptionFields = Object.keys(data.fields || {})
+          .filter(key => key.toLowerCase().includes('description') || key.toLowerCase().includes('desc'));
+        console.log('Possible description fields:', possibleDescriptionFields);
+        
+        return data;
+      }
+    } catch (error) {
+      console.error('Error debugging task:', error);
+    }
+  };
+
+  const handleTaskClick = async (task: JiraIssue) => {
+    console.log('Selected task:', task);
+    
+    // Debug da tarefa CDCA-281 especificamente
+    if (task.key === 'CDCA-281' || task.key === 'CDCA-193') {
+      await debugTask(task.key);
+    }
+    
     setSelectedTask(task);
     setIsTaskDialogOpen(true);
   };

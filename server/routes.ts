@@ -50,6 +50,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Debug endpoint to get all fields of a specific issue
+  app.post("/api/jira/debug-issue", async (req, res) => {
+    try {
+      const { jiraUrl, username, apiToken, issueKey } = req.body;
+      
+      const response = await axios.get(`${jiraUrl}/rest/api/3/issue/${issueKey}`, {
+        auth: {
+          username,
+          password: apiToken,
+        },
+        headers: {
+          'Accept': 'application/json',
+        },
+        params: {
+          expand: 'names,schema'
+        }
+      });
+
+      console.log(`Debug issue ${issueKey}:`, JSON.stringify(response.data, null, 2));
+      res.json(response.data);
+    } catch (error: any) {
+      console.error("Error fetching issue debug:", error.response?.data || error.message);
+      res.status(500).json({ 
+        error: error.response?.data?.errorMessages?.[0] || "Failed to fetch issue debug" 
+      });
+    }
+  });
+
   app.post("/api/jira/project-metadata", async (req, res) => {
     try {
       const { jiraUrl, username, apiToken, projectKey } = req.body;
