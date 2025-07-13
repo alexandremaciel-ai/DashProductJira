@@ -308,9 +308,20 @@ export function useDeveloperProductivity(issues: JiraIssue[]): DeveloperProducti
         const dev = developerMap.get(key)!;
         dev.issues.push(issue);
         
-        if (issue.fields.resolutiondate) {
+        // Check if issue is resolved (either has resolution date or is in done status)
+        const isResolved = issue.fields.resolutiondate || 
+                          issue.fields.status.statusCategory.key === "done" ||
+                          issue.fields.status.statusCategory.name === "Done";
+        
+        if (isResolved) {
           dev.resolvedIssues.push(issue);
-          dev.totalPoints += issue.fields.customfield_10016 || 1;
+          // Try different story points fields
+          const storyPoints = issue.fields.customfield_10016 || 
+                             issue.fields.customfield_10002 || 
+                             issue.fields.customfield_10004 || 
+                             issue.fields.customfield_10008 || 
+                             1;
+          dev.totalPoints += typeof storyPoints === 'number' ? storyPoints : 1;
         }
       }
     });
@@ -318,7 +329,8 @@ export function useDeveloperProductivity(issues: JiraIssue[]): DeveloperProducti
     const productivityData = Array.from(developerMap.values()).map(dev => {
       const cycleTimes = dev.resolvedIssues.map(issue => {
         const created = new Date(issue.fields.created);
-        const resolved = new Date(issue.fields.resolutiondate!);
+        // Use resolution date if available, otherwise use updated date
+        const resolved = new Date(issue.fields.resolutiondate || issue.fields.updated);
         return (resolved.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
       });
 

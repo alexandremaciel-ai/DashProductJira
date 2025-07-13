@@ -104,17 +104,63 @@ export default function DashboardPage() {
     });
   }, [issues]);
 
-  const issueDistributionData = [
-    { name: "Done", value: issues.filter(i => i.fields.status.statusCategory.name === "Done").length },
-    { name: "In Progress", value: issues.filter(i => i.fields.status.statusCategory.name === "In Progress").length },
-    { name: "To Do", value: issues.filter(i => i.fields.status.statusCategory.name === "To Do").length },
-  ];
+  // Issue Distribution Data - dynamic based on actual status categories
+  const issueDistributionData = useMemo(() => {
+    if (!issues.length) return [];
+    
+    // Group by status category
+    const statusCategories = new Map<string, number>();
+    
+    issues.forEach(issue => {
+      const categoryKey = issue.fields.status.statusCategory.key;
+      const categoryName = issue.fields.status.statusCategory.name;
+      
+      // Map category keys to user-friendly names
+      let displayName = categoryName;
+      if (categoryKey === "new" || categoryKey === "indeterminate") {
+        displayName = "A Fazer";
+      } else if (categoryKey === "done") {
+        displayName = "Concluído";
+      } else if (categoryKey === "progress") {
+        displayName = "Em Progresso";
+      }
+      
+      statusCategories.set(displayName, (statusCategories.get(displayName) || 0) + 1);
+    });
+    
+    return Array.from(statusCategories.entries()).map(([name, value]) => ({
+      name,
+      value
+    })).filter(item => item.value > 0); // Only show categories with issues
+  }, [issues]);
 
-  const developerChartData = developerProductivity.map(dev => ({
-    name: dev.name.split(" ").map(n => n[0]).join(""),
-    issues: dev.issuesResolved,
-    storyPoints: dev.storyPoints,
-  }));
+  // Developer Productivity Data - improved with better name handling
+  const developerChartData = useMemo(() => {
+    if (!developerProductivity.length) return [];
+    
+    return developerProductivity
+      .filter(dev => dev.issuesResolved > 0) // Only show developers with resolved issues
+      .map(dev => {
+        // Create a better display name - use first name + last initial or just initials if too long
+        let displayName = dev.name;
+        const nameParts = dev.name.split(" ");
+        if (nameParts.length > 1) {
+          if (dev.name.length > 15) {
+            displayName = nameParts.map(n => n[0]).join("");
+          } else {
+            displayName = `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`;
+          }
+        }
+        
+        return {
+          name: displayName,
+          issues: dev.issuesResolved,
+          storyPoints: dev.storyPoints,
+        };
+      })
+      .sort((a, b) => productivityMetric === "issues" ? b.issues - a.issues : b.storyPoints - a.storyPoints)
+      .slice(0, 10); // Show top 10 developers
+  }, [developerProductivity, productivityMetric]);
 
   // Event handlers
   const handleSwitchProject = () => setLocation("/projects");
@@ -240,7 +286,7 @@ export default function DashboardPage() {
                   <CardTitle className="text-lg text-blue-800">Debug: Dados Calculados</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                     <div>
                       <p className="font-semibold text-blue-700">Total de Tarefas:</p>
                       <p className="text-blue-600">{issues.length}</p>
@@ -254,8 +300,24 @@ export default function DashboardPage() {
                       <p className="text-blue-600">{metrics.velocity}</p>
                     </div>
                     <div>
+                      <p className="font-semibold text-blue-700">Desenvolvedores Ativos:</p>
+                      <p className="text-blue-600">{developerProductivity.length}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-700">Distribuição de Status:</p>
+                      <p className="text-blue-600">{issueDistributionData.map(d => `${d.name}: ${d.value}`).join(", ")}</p>
+                    </div>
+                    <div>
                       <p className="font-semibold text-blue-700">Tipos de Issue:</p>
-                      <p className="text-blue-600">{[...new Set(issues.map(i => i.fields.issuetype.name))].join(", ")}</p>
+                      <p className="text-blue-600">{[...new Set(issues.map(i => i.fields.issuetype.name))].slice(0, 3).join(", ")}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-700">Gráfico Dev:</p>
+                      <p className="text-blue-600">{developerChartData.length} desenvolvedores</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-700">Evolução (7 dias):</p>
+                      <p className="text-blue-600">{taskEvolutionData.reduce((sum, d) => sum + d.value, 0)} tarefas</p>
                     </div>
                   </div>
                 </CardContent>
