@@ -15,6 +15,7 @@ Time filters: All period filters working correctly (Esta Semana, Este Mês, Trim
 Default view: Changed to "Todo Período" to show all data by default.
 Card consistency: Fixed discrepancy between card statistics and kanban board data - both now show tasks created in selected period.
 Advanced cards: Kanban now uses same professional MetricsCard components as dashboard with comparison statistics.
+Professional charts: Implemented 4-tab chart system with Velocity Chart, Cycle Time Analysis, Team Performance, and Issue Type Distribution.
 
 ## System Architecture
 
