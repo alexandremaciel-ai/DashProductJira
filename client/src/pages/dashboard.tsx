@@ -155,7 +155,7 @@ export default function DashboardPage() {
 
   // Função para extrair texto da descrição do Jira (ADF format)
   const extractTextFromADF = (adfContent: any): string => {
-    if (!adfContent || typeof adfContent !== 'object') {
+    if (!adfContent) {
       return '';
     }
 
@@ -164,39 +164,47 @@ export default function DashboardPage() {
       return adfContent;
     }
 
-    let text = '';
+    // Se não é um objeto, tenta converter para string
+    if (typeof adfContent !== 'object') {
+      return String(adfContent);
+    }
 
     // Função recursiva para extrair texto de nós ADF
     const extractFromNode = (node: any): string => {
       if (!node) return '';
 
+      let result = '';
+
       // Se tem texto direto
       if (node.text) {
-        return node.text;
+        result += node.text;
       }
 
       // Se tem conteúdo (array de nós filhos)
       if (node.content && Array.isArray(node.content)) {
-        return node.content.map(extractFromNode).join('');
+        for (const childNode of node.content) {
+          result += extractFromNode(childNode);
+        }
       }
 
-      // Se tem marks (formatação) mas ainda tem texto
-      if (node.marks && node.text) {
-        return node.text;
+      // Adicionar quebra de linha para parágrafos
+      if (node.type === 'paragraph' && result) {
+        result += '\n\n';
       }
 
-      return '';
+      return result;
     };
 
-    // Se o ADF tem content (estrutura padrão)
+    let text = '';
+
+    // Se o ADF tem content (estrutura padrão do Atlassian Document Format)
     if (adfContent.content && Array.isArray(adfContent.content)) {
-      text = adfContent.content.map((node: any) => {
-        const nodeText = extractFromNode(node);
-        // Adicionar quebra de linha após parágrafos
-        return node.type === 'paragraph' ? nodeText + '\n' : nodeText;
-      }).join('');
+      text = adfContent.content.map(extractFromNode).join('');
+    } else if (adfContent.type && adfContent.content) {
+      // Se é um nó único com conteúdo
+      text = extractFromNode(adfContent);
     } else {
-      // Tentar extrair diretamente
+      // Tentar extrair de qualquer estrutura
       text = extractFromNode(adfContent);
     }
 
@@ -220,14 +228,13 @@ export default function DashboardPage() {
       
       if (response.ok) {
         const data = await response.json();
-        console.log(`Complete structure for ${taskKey}:`, data);
-        console.log('All fields:', Object.keys(data.fields || {}));
-        console.log('Description field:', data.fields?.description);
+        console.log(`=== DEBUGGING TASK ${taskKey} ===`);
+        console.log('Description field structure:', JSON.stringify(data.fields?.description, null, 2));
+        console.log('Description type:', typeof data.fields?.description);
         
-        // Procurar por possíveis campos de descrição
-        const possibleDescriptionFields = Object.keys(data.fields || {})
-          .filter(key => key.toLowerCase().includes('description') || key.toLowerCase().includes('desc'));
-        console.log('Possible description fields:', possibleDescriptionFields);
+        if (data.fields?.description) {
+          console.log('Extracted text with current function:', extractTextFromADF(data.fields.description));
+        }
         
         return data;
       }
