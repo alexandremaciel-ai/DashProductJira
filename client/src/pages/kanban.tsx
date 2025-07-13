@@ -384,13 +384,13 @@ export default function KanbanPage() {
                 filters={filters}
                 onFiltersChange={setFilters}
                 sprints={sprints || []}
-                issues={issues}
+                issues={tasksCreatedInPeriod}
                 allIssues={issues}
                 credentials={credentials!}
                 projectKey={selectedProject.key}
                 quickStats={{
                   activeIssues: stats.inProgress,
-                  teamMembers: Array.from(new Set(issues.filter(i => i.fields.assignee).map(i => i.fields.assignee!.displayName))).length,
+                  teamMembers: Array.from(new Set(tasksCreatedInPeriod.filter(i => i.fields.assignee).map(i => i.fields.assignee!.displayName))).length,
                   avgCycleTime: 0
                 }}
               />
@@ -412,14 +412,14 @@ export default function KanbanPage() {
 
                   <TabsContent value="kanban">
                     <KanbanBoard 
-                      issues={issues} 
+                      issues={tasksCreatedInPeriod} 
                       credentials={credentials!} 
                       projectKey={selectedProject.key} 
                     />
                   </TabsContent>
 
                   <TabsContent value="charts">
-                    <CompletionCharts issues={issues} />
+                    <CompletionCharts issues={tasksCreatedInPeriod} />
                   </TabsContent>
                 </Tabs>
               </div>

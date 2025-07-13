@@ -13,6 +13,8 @@ Filter consistency: Fixed discrepancies between dashboard and kanban statistics.
 Custom dates: Calendar picker implemented for custom period selection.
 Time filters: All period filters working correctly (Esta Semana, Este Mês, Trimestre, Todo Período, Personalizado).
 Default view: Changed to "Todo Período" to show all data by default.
+Card consistency: Fixed discrepancy between card statistics and kanban board data - both now show tasks created in selected period.
+Advanced cards: Kanban now uses same professional MetricsCard components as dashboard with comparison statistics.
 
 ## System Architecture
 
