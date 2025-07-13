@@ -89,12 +89,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             dateFilter = ` AND updated >= -1w`;
             break;
           case "month":
-            // Este mês: último mês de atividade
-            dateFilter = ` AND updated >= -1M`;
+            // Este mês: últimas 4 semanas de atividade
+            dateFilter = ` AND updated >= -4w`;
             break;
           case "quarter":
-            // Trimestre: últimos 3 meses de atividade
-            dateFilter = ` AND updated >= -3M`;
+            // Trimestre: últimas 12 semanas de atividade
+            dateFilter = ` AND updated >= -12w`;
             break;
           case "custom":
             // Handle custom date range - usar apenas as datas selecionadas
