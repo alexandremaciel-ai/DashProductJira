@@ -8,6 +8,9 @@ This is a full-stack web application built for monitoring and analyzing develope
 
 Preferred communication style: Simple, everyday language.
 Features requested: Kanban board with task details, completion charts by day/week/month.
+Translation: Complete Portuguese (Brazilian) translation implemented across all components.
+Filter consistency: Fixed discrepancies between dashboard and kanban statistics.
+Custom dates: Calendar picker implemented for custom period selection.
 
 ## System Architecture
 
@@ -46,8 +49,10 @@ Features requested: Kanban board with task details, completion charts by day/wee
 - **Interactive Charts**: Line charts for trends, pie charts for distributions, bar charts for comparisons
 - **Filtering System**: Time period, sprint, assignee, and issue type filters
 - **Export Functionality**: PDF and CSV report generation
-- **Kanban Board**: Visual task management with drag-and-drop interface, task details modal
+- **Kanban Board**: Visual task management with task details modal and sidebar filters
 - **Completion Charts**: Dynamic charts showing task completion by day, week, and month
+- **Custom Date Picker**: Calendar interface for custom period selection with date range support
+- **Consistent Filtering**: Unified filter logic between dashboard and kanban views
 
 ### Data Processing
 - **API Integration**: Jira REST API v3 for fetching projects, issues, sprints

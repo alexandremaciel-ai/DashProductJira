@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, BarChart3, Columns3 } from "lucide-react";
 
 import { Header } from "@/components/header";
+import { Sidebar } from "@/components/sidebar";
 import { KanbanBoard } from "@/components/kanban-board";
 import { CompletionCharts } from "@/components/completion-charts";
 
