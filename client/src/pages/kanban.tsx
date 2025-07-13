@@ -20,9 +20,9 @@ export default function KanbanPage() {
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(null);
   const [aiEnabled, setAIEnabled] = useState(false);
 
-  // Filtros para carregar todas as issues do projeto
+  // Filtros para carregar todas as issues do projeto sem restrições de tempo
   const filters: DashboardFilters = {
-    timePeriod: "quarter", // Carregar dados do trimestre para ter mais contexto
+    timePeriod: "custom", // Usar custom para não aplicar filtros de data
     sprint: undefined,
     assignee: undefined,
     issueTypes: [],

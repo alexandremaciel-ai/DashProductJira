@@ -76,36 +76,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { jiraUrl, username, apiToken, projectKey, filters } = req.body;
       
-      let jql = `project = ${projectKey}`;
+      // Start with a broader JQL query to get all issues
+      let jql = `project = "${projectKey}"`;
       
-      // Add filters to JQL
-      if (filters?.timePeriod) {
+      // For initial load, don't apply date filters to get all issues
+      if (filters?.timePeriod && filters.timePeriod !== "custom") {
         const { timePeriod } = filters;
         let dateFilter = "";
         
         switch (timePeriod) {
           case "week":
-            dateFilter = "AND updated >= -1w";
+            dateFilter = " AND updated >= -1w";
             break;
           case "month":
-            dateFilter = "AND updated >= -1M";
+            dateFilter = " AND updated >= -1M";
             break;
           case "quarter":
-            dateFilter = "AND updated >= -3M";
+            dateFilter = " AND updated >= -3M";
             break;
         }
-        jql += ` ${dateFilter}`;
+        jql += dateFilter;
       }
 
       if (filters?.assignee && filters.assignee !== "All Developers") {
         jql += ` AND assignee = "${filters.assignee}"`;
       }
 
-      // Only add issue type filter if there are selected types
+      // Add issue type filter if selected
       if (filters?.issueTypes && filters.issueTypes.length > 0) {
-        // Remove the issue type filter for now to avoid errors
-        // We'll fetch all issues and filter client-side if needed
+        const issueTypeFilter = filters.issueTypes.map((type: string) => `"${type}"`).join(",");
+        jql += ` AND issuetype in (${issueTypeFilter})`;
       }
+
+      console.log("JQL Query:", jql);
 
       const response = await axios.get(`${jiraUrl}/rest/api/3/search`, {
         auth: {
@@ -119,11 +122,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           jql,
           fields: "summary,status,assignee,created,updated,resolutiondate,issuetype,customfield_10016", // customfield_10016 is usually story points
           maxResults: 1000,
+          startAt: 0,
         },
       });
 
+      console.log("Issues found:", response.data.total);
       res.json(response.data);
     } catch (error: any) {
+      console.error("Error fetching issues:", error.response?.data || error.message);
       res.status(500).json({ 
         error: error.response?.data?.errorMessages?.[0] || "Failed to fetch issues" 
       });
