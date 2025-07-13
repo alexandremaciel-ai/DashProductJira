@@ -353,6 +353,16 @@ export function useDeveloperProductivity(issues: JiraIssue[]): DeveloperProducti
   return productivity;
 }
 
+export function useProjectMembers(credentials: JiraCredentials | null, projectKey: string | null) {
+  return useQuery({
+    queryKey: ['/api/jira/project-members', projectKey],
+    queryFn: credentials && projectKey 
+      ? () => jiraApi.getProjectMembers(credentials, projectKey)
+      : () => Promise.resolve([]),
+    enabled: !!(credentials && projectKey),
+  });
+}
+
 export function useAIInsights(
   metrics: ProductivityMetrics,
   isEnabled: boolean

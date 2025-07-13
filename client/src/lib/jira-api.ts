@@ -70,4 +70,12 @@ export const jiraApi = {
     });
     return response.data;
   },
+
+  async getProjectMembers(credentials: JiraCredentials, projectKey: string): Promise<any[]> {
+    const response = await api.post("/jira/project-members", {
+      ...credentials,
+      projectKey,
+    });
+    return response.data;
+  },
 };

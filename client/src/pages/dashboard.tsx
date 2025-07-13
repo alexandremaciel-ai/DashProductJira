@@ -19,7 +19,8 @@ import {
   useJiraSprints, 
   useProductivityMetrics, 
   useDeveloperProductivity,
-  useAIInsights 
+  useAIInsights,
+  useProjectMembers 
 } from "@/hooks/use-jira-data";
 import { exportUtils } from "@/lib/export-utils";
 
@@ -67,6 +68,7 @@ export default function DashboardPage() {
     filters
   );
   const { data: sprints } = useJiraSprints(credentials, selectedProject?.key || null);
+  const { data: projectMembers } = useProjectMembers(credentials, selectedProject?.key || null);
 
   // Calculate metrics
   const issues = issuesData?.issues || [];
@@ -189,8 +191,8 @@ export default function DashboardPage() {
 
   // Quick stats
   const quickStats = {
-    activeIssues: issues.filter(i => i.fields.status.statusCategory.name !== "Done").length,
-    teamMembers: new Set(issues.map(i => i.fields.assignee?.emailAddress).filter(Boolean)).size,
+    activeIssues: issues.filter(i => i.fields.status.statusCategory.key !== "done").length,
+    teamMembers: projectMembers?.length || 0,
     avgCycleTime: metrics.cycleTime,
   };
 

@@ -3,7 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import type { DashboardFilters, JiraSprint, JiraIssue, JiraCredentials } from "@/types/jira";
-import { useJiraStatusCategories } from "@/hooks/use-jira-data";
+import { useJiraStatusCategories, useProjectMembers } from "@/hooks/use-jira-data";
 
 interface SidebarProps {
   filters: DashboardFilters;
@@ -29,12 +29,16 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials
 
   // Get dynamic status categories and issue types
   const { data: statusData } = useJiraStatusCategories(credentials, projectKey);
+  const { data: projectMembers } = useProjectMembers(credentials, projectKey);
   
   // Get unique issue types from dynamic data or fallback to issues
   const issueTypes = statusData?.issueTypes.map(type => type.name) || 
     (issues && issues.length > 0 
       ? Array.from(new Set(issues.map(issue => issue.fields.issuetype.name)))
       : ["Story", "Bug", "Task", "Epic"]); // fallback default types
+
+  // Get actual team members (assignees) from project
+  const teamMembers = projectMembers || [];
 
   const handleTimePeriodChange = (period: DashboardFilters["timePeriod"]) => {
     onFiltersChange({ ...filters, timePeriod: period });
@@ -107,8 +111,11 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Developers</SelectItem>
-              <SelectItem value="frontend">Frontend Team</SelectItem>
-              <SelectItem value="backend">Backend Team</SelectItem>
+              {teamMembers.map((member) => (
+                <SelectItem key={member.accountId} value={member.emailAddress}>
+                  {member.displayName}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

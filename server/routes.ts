@@ -179,6 +179,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // New endpoint to get dynamic status categories and issue types
+  app.post("/api/jira/project-members", async (req, res) => {
+    try {
+      const { jiraUrl, username, apiToken, projectKey } = req.body;
+      
+      // Get project details with roles
+      const projectResponse = await axios.get(`${jiraUrl}/rest/api/3/project/${projectKey}/role`, {
+        auth: {
+          username,
+          password: apiToken,
+        },
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      const roleUrls = Object.values(projectResponse.data) as string[];
+      const members = new Map();
+
+      // Fetch members from each role
+      for (const roleUrl of roleUrls) {
+        try {
+          const roleResponse = await axios.get(roleUrl, {
+            auth: {
+              username,
+              password: apiToken,
+            },
+            headers: {
+              'Accept': 'application/json',
+            },
+          });
+
+          if (roleResponse.data.actors) {
+            roleResponse.data.actors.forEach((actor: any) => {
+              if (actor.type === 'atlassian-user-role-actor' && actor.actorUser) {
+                const user = actor.actorUser;
+                if (!members.has(user.accountId)) {
+                  members.set(user.accountId, {
+                    accountId: user.accountId,
+                    displayName: user.displayName,
+                    emailAddress: user.emailAddress || '',
+                    avatarUrl: user.avatarUrls?.['48x48'] || '',
+                  });
+                }
+              }
+            });
+          }
+        } catch (roleError: any) {
+          console.log(`Failed to fetch role data from ${roleUrl}:`, roleError.message);
+        }
+      }
+
+      // Also get assignees from project issues to catch anyone who might not be in roles
+      try {
+        const issuesResponse = await axios.get(`${jiraUrl}/rest/api/3/search`, {
+          auth: {
+            username,
+            password: apiToken,
+          },
+          headers: {
+            'Accept': 'application/json',
+          },
+          params: {
+            jql: `project = "${projectKey}"`,
+            fields: 'assignee',
+            maxResults: 1000,
+          },
+        });
+
+        issuesResponse.data.issues.forEach((issue: any) => {
+          if (issue.fields.assignee) {
+            const user = issue.fields.assignee;
+            if (!members.has(user.accountId)) {
+              members.set(user.accountId, {
+                accountId: user.accountId,
+                displayName: user.displayName,
+                emailAddress: user.emailAddress || '',
+                avatarUrl: user.avatarUrls?.['48x48'] || '',
+              });
+            }
+          }
+        });
+      } catch (issuesError: any) {
+        console.log('Failed to fetch assignees from issues:', issuesError.message);
+      }
+
+      res.json(Array.from(members.values()));
+    } catch (error: any) {
+      console.error('Error fetching project members:', error.message);
+      res.status(500).json({ 
+        error: error.response?.data?.errorMessages?.[0] || "Failed to fetch project members" 
+      });
+    }
+  });
+
   app.post("/api/jira/status-categories", async (req, res) => {
     try {
       const { jiraUrl, username, apiToken, projectKey } = req.body;
