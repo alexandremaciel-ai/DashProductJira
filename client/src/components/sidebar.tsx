@@ -38,27 +38,35 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
       ? Array.from(new Set(issues.map(issue => issue.fields.issuetype.name)))
       : ["Story", "Bug", "Task", "Epic"]); // fallback default types
 
-  // Use project members from API to maintain complete list regardless of filters
-  const teamMembers = projectMembers && projectMembers.length > 0 
-    ? projectMembers.map(member => ({
-        accountId: member.accountId,
-        displayName: member.displayName,
-        emailAddress: member.emailAddress || member.accountId,
-      }))
-    : Array.from(
-        new Map(
-          (allIssues || issues)
-            .filter(issue => issue.fields.assignee) // Only issues with assignees
-            .map(issue => [
-              issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName,
-              {
-                accountId: issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName,
-                displayName: issue.fields.assignee!.displayName,
-                emailAddress: issue.fields.assignee!.emailAddress || "",
-              }
-            ])
-        ).values()
-      );
+  // Get team members from issues assignees (same as Kanban board)
+  // We need to use the project's issues to get only actual assignees with tasks
+  const { data: allIssuesData } = useJiraIssues(credentials, projectKey, { 
+    timePeriod: "custom", 
+    sprint: undefined, 
+    assignee: undefined, 
+    issueTypes: [] 
+  });
+  
+  const projectIssues = allIssuesData?.issues || [];
+  
+  // Extract unique assignees from project issues (same as Kanban)
+  const teamMembers = Array.from(
+    new Map(
+      projectIssues
+        .filter(issue => issue.fields.assignee) // Only issues with assignees
+        .map(issue => {
+          const assignee = issue.fields.assignee!;
+          return [
+            assignee.displayName, // Use displayName as key to avoid duplicates
+            {
+              accountId: assignee.accountId, // Use accountId for filtering (Jira's internal ID)
+              displayName: assignee.displayName,
+              emailAddress: assignee.emailAddress || "",
+            }
+          ];
+        })
+    ).values()
+  );
 
   const handleTimePeriodChange = (period: DashboardFilters["timePeriod"]) => {
     onFiltersChange({ ...filters, timePeriod: period });
@@ -134,13 +142,13 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
             <SelectContent>
               <SelectItem value="all">All Developers</SelectItem>
               {teamMembers && teamMembers.length > 0 ? teamMembers
-                .filter(member => member.accountId && (member.emailAddress || member.displayName))
+                .filter(member => member.accountId && member.displayName)
                 .map((member) => (
                 <SelectItem 
                   key={member.accountId} 
-                  value={member.emailAddress || member.accountId}
+                  value={member.accountId}
                 >
-                  {member.displayName || member.emailAddress || "Unknown User"}
+                  {member.displayName}
                 </SelectItem>
               )) : (
                 <SelectItem value="no-members" disabled>No team members found</SelectItem>
