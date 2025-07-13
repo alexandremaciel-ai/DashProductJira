@@ -198,6 +198,55 @@ export default function DashboardPage() {
     handleExportPDF();
   };
 
+  // Helper function to get tasks created in the current period
+  const getTasksCreatedInPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
+    const now = new Date();
+    let startDate: Date;
+
+    switch (filters.timePeriod) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000); // 4 weeks ago
+        break;
+      case 'quarter':
+        startDate = new Date(now.getTime() - 84 * 24 * 60 * 60 * 1000); // 12 weeks ago
+        break;
+      case 'custom':
+        if (filters.customStartDate) {
+          startDate = new Date(filters.customStartDate);
+        } else {
+          return allIssues; // If no custom start date, return all
+        }
+        break;
+      case 'all':
+      default:
+        return allIssues; // Return all tasks for "Todo Período"
+    }
+
+    return allIssues.filter(issue => {
+      const createdDate = new Date(issue.fields.created);
+      if (filters.timePeriod === 'custom' && filters.customEndDate) {
+        const endDate = new Date(filters.customEndDate);
+        return createdDate >= startDate && createdDate <= endDate;
+      }
+      return createdDate >= startDate;
+    });
+  };
+
+  // Helper function to get period description
+  const getPeriodDescription = (timePeriod: string) => {
+    switch (timePeriod) {
+      case 'week': return 'esta semana';
+      case 'month': return 'este mês';
+      case 'quarter': return 'este trimestre';
+      case 'custom': return 'no período personalizado';
+      case 'all':
+      default: return 'em todo período';
+    }
+  };
+
   // Quick stats - use assignees from current issues
   const assigneesCount = new Set(
     issues
@@ -261,38 +310,47 @@ export default function DashboardPage() {
                   Ver Quadro Kanban
                 </Button>
               </div>
-              {/* Metrics Cards - Aligned with Filter Data */}
+              {/* Metrics Cards - Based on Creation Date */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <MetricsCard
                   title="Total de Tarefas"
-                  value={issues.length}
+                  value={getTasksCreatedInPeriod(issues, filters).length}
                   change={0}
                   icon={<CheckCircle className="text-blue-600" size={20} />}
-                  description={`Filtro: ${filters.timePeriod === 'all' ? 'Todo Período' : filters.timePeriod === 'week' ? 'Esta Semana' : filters.timePeriod === 'month' ? 'Este Mês' : filters.timePeriod === 'quarter' ? 'Trimestre' : 'Personalizado'}`}
+                  description={`Criadas ${getPeriodDescription(filters.timePeriod)}`}
                   iconBgColor="bg-blue-100"
                 />
                 <MetricsCard
                   title="A Fazer"
-                  value={issues.filter(i => i.fields.status.statusCategory.name === "To Do").length}
+                  value={getTasksCreatedInPeriod(issues, filters).filter(i => 
+                    i.fields.status.statusCategory.name === "To Do" || 
+                    i.fields.status.statusCategory.key === "new"
+                  ).length}
                   change={0}
                   icon={<Clock className="text-gray-600" size={20} />}
-                  description="Tarefas pendentes"
+                  description={`Criadas ${getPeriodDescription(filters.timePeriod)} - pendentes`}
                   iconBgColor="bg-gray-100"
                 />
                 <MetricsCard
                   title="Em Progresso"
-                  value={issues.filter(i => i.fields.status.statusCategory.name === "In Progress").length}
+                  value={getTasksCreatedInPeriod(issues, filters).filter(i => 
+                    i.fields.status.statusCategory.name === "In Progress" || 
+                    i.fields.status.statusCategory.key === "indeterminate"
+                  ).length}
                   change={0}
                   icon={<Rocket className="text-yellow-600" size={20} />}
-                  description="Tarefas em andamento"
+                  description={`Criadas ${getPeriodDescription(filters.timePeriod)} - em andamento`}
                   iconBgColor="bg-yellow-100"
                 />
                 <MetricsCard
                   title="Concluídas"
-                  value={issues.filter(i => i.fields.status.statusCategory.name === "Done").length}
+                  value={getTasksCreatedInPeriod(issues, filters).filter(i => 
+                    i.fields.status.statusCategory.name === "Done" || 
+                    i.fields.status.statusCategory.key === "done"
+                  ).length}
                   change={0}
                   icon={<CheckCircle className="text-green-600" size={20} />}
-                  description="Tarefas finalizadas"
+                  description={`Criadas ${getPeriodDescription(filters.timePeriod)} - finalizadas`}
                   iconBgColor="bg-green-100"
                 />
               </div>
@@ -305,20 +363,20 @@ export default function DashboardPage() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <p className="font-semibold text-blue-700">Total de Tarefas (Filtro Atual):</p>
+                      <p className="font-semibold text-blue-700">Total Criadas no Período:</p>
+                      <p className="text-blue-600">{getTasksCreatedInPeriod(issues, filters).length}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-700">Filtrado pela API (updated):</p>
                       <p className="text-blue-600">{issues.length}</p>
                     </div>
                     <div>
-                      <p className="font-semibold text-blue-700">A Fazer:</p>
-                      <p className="text-blue-600">{issues.filter(i => i.fields.status.statusCategory.name === "To Do").length}</p>
+                      <p className="font-semibold text-blue-700">Período Ativo:</p>
+                      <p className="text-blue-600">{getPeriodDescription(filters.timePeriod)}</p>
                     </div>
                     <div>
-                      <p className="font-semibold text-blue-700">Em Progresso:</p>
-                      <p className="text-blue-600">{issues.filter(i => i.fields.status.statusCategory.name === "In Progress").length}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700">Concluídas:</p>
-                      <p className="text-blue-600">{issues.filter(i => i.fields.status.statusCategory.name === "Done").length}</p>
+                      <p className="font-semibold text-blue-700">Modo de Cálculo:</p>
+                      <p className="text-blue-600">Data de criação</p>
                     </div>
                     <div>
                       <p className="font-semibold text-blue-700">Story Points (Semana):</p>

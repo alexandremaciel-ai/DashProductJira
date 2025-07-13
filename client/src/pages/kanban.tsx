@@ -104,12 +104,81 @@ export default function KanbanPage() {
     });
   };
 
+  // Helper function to get tasks created in the current period (same logic as dashboard)
+  const getTasksCreatedInPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
+    const now = new Date();
+    let startDate: Date;
+
+    switch (filters.timePeriod) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000); // 4 weeks ago
+        break;
+      case 'quarter':
+        startDate = new Date(now.getTime() - 84 * 24 * 60 * 60 * 1000); // 12 weeks ago
+        break;
+      case 'custom':
+        if (filters.customStartDate) {
+          startDate = new Date(filters.customStartDate);
+        } else {
+          return allIssues; // If no custom start date, return all
+        }
+        break;
+      case 'all':
+      default:
+        return allIssues; // Return all tasks for "Todo Período"
+    }
+
+    return allIssues.filter(issue => {
+      const createdDate = new Date(issue.fields.created);
+      if (filters.timePeriod === 'custom' && filters.customEndDate) {
+        const endDate = new Date(filters.customEndDate);
+        return createdDate >= startDate && createdDate <= endDate;
+      }
+      return createdDate >= startDate;
+    });
+  };
+
+  // Get tasks created in the current period for consistency with dashboard
+  const tasksCreatedInPeriod = getTasksCreatedInPeriod(issues, filters);
+
   const stats = {
-    total: issues.length, // Total baseado no filtro atual aplicado
-    todo: getStatsByStatus("To Do").length,
-    inProgress: getStatsByStatus("In Progress").length,
-    done: getStatsByStatus("Done").length,
-    thisWeek: issues.filter(i => {
+    total: tasksCreatedInPeriod.length, // Total baseado em criação no período
+    todo: tasksCreatedInPeriod.filter(issue => {
+      const statusCategoryName = issue.fields.status.statusCategory.name;
+      const statusName = issue.fields.status.name.toLowerCase();
+      
+      return statusCategoryName === "To Do" || 
+             statusCategoryName === "new" ||
+             statusName.includes("aberto") ||
+             statusName.includes("novo") ||
+             statusName.includes("backlog");
+    }).length,
+    inProgress: tasksCreatedInPeriod.filter(issue => {
+      const statusCategoryName = issue.fields.status.statusCategory.name;
+      const statusName = issue.fields.status.name.toLowerCase();
+      
+      return statusCategoryName === "In Progress" || 
+             statusCategoryName === "indeterminate" ||
+             statusName.includes("progresso") ||
+             statusName.includes("progress") ||
+             statusName.includes("desenvolvimento") ||
+             statusName.includes("em andamento");
+    }).length,
+    done: tasksCreatedInPeriod.filter(issue => {
+      const statusCategoryName = issue.fields.status.statusCategory.name;
+      const statusName = issue.fields.status.name.toLowerCase();
+      
+      return statusCategoryName === "Done" || 
+             statusCategoryName === "complete" ||
+             statusName.includes("concluído") ||
+             statusName.includes("done") ||
+             statusName.includes("fechado") ||
+             statusName.includes("resolvido");
+    }).length,
+    thisWeek: tasksCreatedInPeriod.filter(i => {
       if (!i.fields.resolutiondate) return false;
       const resolved = new Date(i.fields.resolutiondate);
       const weekAgo = new Date();
@@ -121,7 +190,8 @@ export default function KanbanPage() {
   // Debug: Log para verificar se os números estão corretos
   console.log("Kanban Stats Debug:", {
     filter: filters.timePeriod,
-    totalIssues: issues.length,
+    totalCreatedInPeriod: tasksCreatedInPeriod.length,
+    totalFilteredByAPI: issues.length,
     todoCount: stats.todo,
     inProgressCount: stats.inProgress,
     doneCount: stats.done,
@@ -172,24 +242,28 @@ export default function KanbanPage() {
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
                   <div className="text-sm text-gray-600">Total de Tarefas</div>
+                  <div className="text-xs text-gray-500">Criadas no período</div>
                 </CardContent>
               </Card>
               <Card className="border border-gray-200">
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-gray-600">{stats.todo}</div>
                   <div className="text-sm text-gray-600">A Fazer</div>
+                  <div className="text-xs text-gray-500">Criadas no período</div>
                 </CardContent>
               </Card>
               <Card className="border border-gray-200">
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
                   <div className="text-sm text-gray-600">Em Progresso</div>
+                  <div className="text-xs text-gray-500">Criadas no período</div>
                 </CardContent>
               </Card>
               <Card className="border border-gray-200">
                 <CardContent className="p-4 text-center">
                   <div className="text-2xl font-bold text-green-600">{stats.done}</div>
                   <div className="text-sm text-gray-600">Concluídas</div>
+                  <div className="text-xs text-gray-500">Criadas no período</div>
                 </CardContent>
               </Card>
               <Card className="border border-gray-200">
