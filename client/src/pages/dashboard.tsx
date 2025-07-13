@@ -86,7 +86,42 @@ export default function DashboardPage() {
   // AI Insights
   const { data: aiInsights, isLoading: aiLoading } = useAIInsights(metrics, aiEnabled);
 
+  // Helper function to get tasks created in the current period
+  const getTasksCreatedInPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
+    const now = new Date();
+    let startDate: Date;
 
+    switch (filters.timePeriod) {
+      case 'week':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000); // 4 weeks ago
+        break;
+      case 'quarter':
+        startDate = new Date(now.getTime() - 84 * 24 * 60 * 60 * 1000); // 12 weeks ago
+        break;
+      case 'custom':
+        if (filters.customStartDate) {
+          startDate = new Date(filters.customStartDate);
+        } else {
+          return allIssues; // If no custom start date, return all
+        }
+        break;
+      case 'all':
+      default:
+        return allIssues; // Return all tasks for "Todo Período"
+    }
+
+    return allIssues.filter(issue => {
+      const createdDate = new Date(issue.fields.created);
+      if (filters.timePeriod === 'custom' && filters.customEndDate) {
+        const endDate = new Date(filters.customEndDate);
+        return createdDate >= startDate && createdDate <= endDate;
+      }
+      return createdDate >= startDate;
+    });
+  };
 
   // Developer Productivity Data - usar a mesma lógica de filtro dos cards
   const developerChartData = useMemo(() => {
@@ -149,43 +184,6 @@ export default function DashboardPage() {
     // Combined export - both CSV and PDF
     handleExportCSV();
     handleExportPDF();
-  };
-
-  // Helper function to get tasks created in the current period
-  const getTasksCreatedInPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
-    const now = new Date();
-    let startDate: Date;
-
-    switch (filters.timePeriod) {
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
-        break;
-      case 'month':
-        startDate = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000); // 4 weeks ago
-        break;
-      case 'quarter':
-        startDate = new Date(now.getTime() - 84 * 24 * 60 * 60 * 1000); // 12 weeks ago
-        break;
-      case 'custom':
-        if (filters.customStartDate) {
-          startDate = new Date(filters.customStartDate);
-        } else {
-          return allIssues; // If no custom start date, return all
-        }
-        break;
-      case 'all':
-      default:
-        return allIssues; // Return all tasks for "Todo Período"
-    }
-
-    return allIssues.filter(issue => {
-      const createdDate = new Date(issue.fields.created);
-      if (filters.timePeriod === 'custom' && filters.customEndDate) {
-        const endDate = new Date(filters.customEndDate);
-        return createdDate >= startDate && createdDate <= endDate;
-      }
-      return createdDate >= startDate;
-    });
   };
 
   // Helper function to get period description
