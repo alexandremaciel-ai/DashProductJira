@@ -237,46 +237,118 @@ function TaskCard({ issue }: { issue: JiraIssue }) {
 }
 
 export function KanbanBoard({ issues }: KanbanBoardProps) {
+  // Debug: log the unique statuses to understand the data structure
+  const uniqueStatuses = [...new Set(issues.map(issue => 
+    `${issue.fields.status.name} (${issue.fields.status.statusCategory.name})`
+  ))];
+  
+  console.log("Unique statuses found:", uniqueStatuses);
+  console.log("Total issues:", issues.length);
+
   const getIssuesByStatus = (statusCategory: string) => {
-    return issues.filter(issue => 
-      issue.fields.status.statusCategory.name === statusCategory
-    );
+    return issues.filter(issue => {
+      const statusCategoryName = issue.fields.status.statusCategory.name;
+      const statusName = issue.fields.status.name.toLowerCase();
+      
+      // Mapeamento mais flexível para diferentes instâncias do Jira
+      if (statusCategory === "To Do") {
+        return statusCategoryName === "To Do" || 
+               statusCategoryName === "new" ||
+               statusName.includes("aberto") ||
+               statusName.includes("novo") ||
+               statusName.includes("backlog") ||
+               statusName.includes("to do") ||
+               statusName.includes("a fazer");
+      } else if (statusCategory === "In Progress") {
+        return statusCategoryName === "In Progress" || 
+               statusCategoryName === "indeterminate" ||
+               statusName.includes("progresso") ||
+               statusName.includes("progress") ||
+               statusName.includes("desenvolvimento") ||
+               statusName.includes("em andamento") ||
+               statusName.includes("fazendo") ||
+               statusName.includes("doing");
+      } else if (statusCategory === "Done") {
+        return statusCategoryName === "Done" || 
+               statusCategoryName === "complete" ||
+               statusName.includes("concluído") ||
+               statusName.includes("done") ||
+               statusName.includes("fechado") ||
+               statusName.includes("resolvido") ||
+               statusName.includes("finalizado") ||
+               statusName.includes("terminado");
+      }
+      return false;
+    });
   };
 
+  // Se não há tarefas mapeadas, mostrar todas as tarefas na primeira coluna para debug
+  const allMappedIssues = columns.reduce((acc, col) => acc + getIssuesByStatus(col.statusCategory).length, 0);
+  
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {columns.map(column => {
-        const columnIssues = getIssuesByStatus(column.statusCategory);
-        
-        return (
-          <Card key={column.id} className={`${column.color} min-h-[400px]`}>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  {column.icon}
-                  <span>{column.title}</span>
-                </div>
-                <Badge variant="secondary" className="text-xs">
-                  {columnIssues.length}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <ScrollArea className="h-[500px] pr-2">
-                {columnIssues.length > 0 ? (
-                  columnIssues.map(issue => (
-                    <TaskCard key={issue.id} issue={issue} />
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p className="text-sm">Nenhuma tarefa</p>
+    <div className="space-y-4">
+      {/* Debug info para entender os dados */}
+      {allMappedIssues === 0 && issues.length > 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-sm text-yellow-800">
+            <strong>Debug:</strong> Encontradas {issues.length} tarefas, mas nenhuma foi mapeada para as colunas. 
+            Status encontrados: {uniqueStatuses.join(", ")}
+          </p>
+        </div>
+      )}
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {columns.map(column => {
+          const columnIssues = getIssuesByStatus(column.statusCategory);
+          
+          return (
+            <Card key={column.id} className={`${column.color} min-h-[400px]`}>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    {column.icon}
+                    <span>{column.title}</span>
                   </div>
-                )}
-              </ScrollArea>
-            </CardContent>
-          </Card>
-        );
-      })}
+                  <Badge variant="secondary" className="text-xs">
+                    {columnIssues.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <ScrollArea className="h-[500px] pr-2">
+                  {columnIssues.length > 0 ? (
+                    columnIssues.map(issue => (
+                      <TaskCard key={issue.id} issue={issue} />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">Nenhuma tarefa</p>
+                    </div>
+                  )}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+      
+      {/* Mostrar todas as tarefas que não foram mapeadas */}
+      {allMappedIssues === 0 && issues.length > 0 && (
+        <Card className="border-2 border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="text-sm font-medium text-orange-800">
+              Todas as Tarefas (não mapeadas)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-[400px] pr-2">
+              {issues.map(issue => (
+                <TaskCard key={issue.id} issue={issue} />
+              ))}
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

@@ -66,12 +66,42 @@ export default function KanbanPage() {
     setLocation("/");
   };
 
-  // Statistics
+  // Statistics with flexible status mapping
+  const getStatsByStatus = (statusCategory: string) => {
+    return issues.filter(issue => {
+      const statusCategoryName = issue.fields.status.statusCategory.name;
+      const statusName = issue.fields.status.name.toLowerCase();
+      
+      if (statusCategory === "To Do") {
+        return statusCategoryName === "To Do" || 
+               statusCategoryName === "new" ||
+               statusName.includes("aberto") ||
+               statusName.includes("novo") ||
+               statusName.includes("backlog");
+      } else if (statusCategory === "In Progress") {
+        return statusCategoryName === "In Progress" || 
+               statusCategoryName === "indeterminate" ||
+               statusName.includes("progresso") ||
+               statusName.includes("progress") ||
+               statusName.includes("desenvolvimento") ||
+               statusName.includes("em andamento");
+      } else if (statusCategory === "Done") {
+        return statusCategoryName === "Done" || 
+               statusCategoryName === "complete" ||
+               statusName.includes("concluído") ||
+               statusName.includes("done") ||
+               statusName.includes("fechado") ||
+               statusName.includes("resolvido");
+      }
+      return false;
+    });
+  };
+
   const stats = {
     total: issues.length,
-    todo: issues.filter(i => i.fields.status.statusCategory.name === "To Do").length,
-    inProgress: issues.filter(i => i.fields.status.statusCategory.name === "In Progress").length,
-    done: issues.filter(i => i.fields.status.statusCategory.name === "Done").length,
+    todo: getStatsByStatus("To Do").length,
+    inProgress: getStatsByStatus("In Progress").length,
+    done: getStatsByStatus("Done").length,
     thisWeek: issues.filter(i => {
       if (!i.fields.resolutiondate) return false;
       const resolved = new Date(i.fields.resolutiondate);
