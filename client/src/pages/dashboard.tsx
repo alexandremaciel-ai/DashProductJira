@@ -212,6 +212,20 @@ export default function DashboardPage() {
   };
 
   const handleTaskClick = (task: JiraIssue) => {
+    // Debug temporário para investigar Story Points
+    console.log('Task fields:', Object.keys(task.fields));
+    console.log('customfield_10016:', task.fields.customfield_10016);
+    
+    // Procurar por campos que podem ser Story Points
+    const customFields = Object.keys(task.fields).filter(key => key.startsWith('customfield_'));
+    console.log('All custom fields:', customFields);
+    customFields.forEach(field => {
+      const value = (task.fields as any)[field];
+      if (typeof value === 'number' && value < 100) { // Story points geralmente são números pequenos
+        console.log(`Possible Story Points field: ${field} = ${value}`);
+      }
+    });
+    
     setSelectedTask(task);
     setIsTaskDialogOpen(true);
   };
