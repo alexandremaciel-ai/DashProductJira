@@ -9,11 +9,52 @@ import type { JiraIssue } from "@/types/jira";
 interface CompletionChartsProps {
   issues: JiraIssue[];
   allIssues?: JiraIssue[];
+  dashboardFilters?: {
+    timePeriod: string;
+    customStartDate?: string;
+    customEndDate?: string;
+  };
 }
 
 type TimeRange = "day" | "week" | "month";
 
-export function CompletionCharts({ issues, allIssues }: CompletionChartsProps) {
+// Função auxiliar para calcular período do dashboard
+function getDashboardPeriodRange(dashboardFilters?: { timePeriod: string; customStartDate?: string; customEndDate?: string }) {
+  if (!dashboardFilters) return null;
+  
+  const now = new Date();
+  
+  switch (dashboardFilters.timePeriod) {
+    case 'week':
+      return {
+        start: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+        end: now
+      };
+    case 'month':
+      return {
+        start: new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000),
+        end: now
+      };
+    case 'quarter':
+      return {
+        start: new Date(now.getTime() - 84 * 24 * 60 * 60 * 1000),
+        end: now
+      };
+    case 'custom':
+      if (dashboardFilters.customStartDate) {
+        return {
+          start: new Date(dashboardFilters.customStartDate),
+          end: dashboardFilters.customEndDate ? new Date(dashboardFilters.customEndDate) : now
+        };
+      }
+      return null;
+    case 'all':
+    default:
+      return null;
+  }
+}
+
+export function CompletionCharts({ issues, allIssues, dashboardFilters }: CompletionChartsProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>("week");
 
   // Velocity Chart Data (Story Points por semana)
@@ -223,8 +264,8 @@ export function CompletionCharts({ issues, allIssues }: CompletionChartsProps) {
   }, [issues]);
 
   const completionData = useMemo(() => {
-    // Usar todos os issues disponíveis para calcular a evolução de tarefas concluídas
-    const issuesForChart = allIssues || issues;
+    // Usar as tarefas já filtradas pelo dashboard (que respeitam o período selecionado)
+    const issuesForChart = issues; // Issues já filtradas pelo período do dashboard
     
     // Filtrar tarefas concluídas - SOMENTE usar tarefas com resolutiondate
     const completedIssues = issuesForChart.filter(issue => {
@@ -243,12 +284,27 @@ export function CompletionCharts({ issues, allIssues }: CompletionChartsProps) {
     const data: Record<string, number> = {};
 
     if (timeRange === "day") {
-      // Últimos 14 dias para visualização mais clara
-      for (let i = 13; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - i);
-        const key = date.toISOString().split('T')[0];
-        data[key] = 0;
+      // Usar período definido pelos filtros do dashboard
+      const periodRange = getDashboardPeriodRange(dashboardFilters);
+      
+      // Se não há período definido, usar últimos 14 dias
+      if (!periodRange) {
+        for (let i = 13; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          const key = date.toISOString().split('T')[0];
+          data[key] = 0;
+        }
+      } else {
+        // Criar dias no período selecionado
+        let currentDate = new Date(periodRange.start);
+        const endDate = new Date(periodRange.end);
+        
+        while (currentDate <= endDate) {
+          const key = currentDate.toISOString().split('T')[0];
+          data[key] = 0;
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
       }
 
       completedIssues.forEach(issue => {
@@ -270,38 +326,69 @@ export function CompletionCharts({ issues, allIssues }: CompletionChartsProps) {
         };
       });
     } else if (timeRange === "week") {
-      // Últimas 8 semanas para visualização mais clara
-      const weekData: { [key: string]: { count: number; weekStart: Date } } = {};
+      // Para filtro "Esta Semana", mostrar os dias da semana atual
+      const periodRange = getDashboardPeriodRange(dashboardFilters);
       
-      for (let i = 7; i >= 0; i--) {
-        const date = new Date(now);
-        date.setDate(date.getDate() - (i * 7));
-        const weekStart = new Date(date);
-        weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Domingo como início
+      if (dashboardFilters?.timePeriod === "week" && periodRange) {
+        // Mostrar os últimos 7 dias da semana atual
+        const weekData: { [key: string]: { count: number; date: Date } } = {};
         
-        const key = `${weekStart.getDate().toString().padStart(2, '0')}/${(weekStart.getMonth() + 1).toString().padStart(2, '0')}`;
-        weekData[key] = { count: 0, weekStart: new Date(weekStart) };
-      }
-
-      completedIssues.forEach(issue => {
-        // Usar APENAS resolutiondate para mostrar evolução real
-        const resolvedDate = new Date(issue.fields.resolutiondate);
-        const issueWeekStart = new Date(resolvedDate);
-        issueWeekStart.setDate(issueWeekStart.getDate() - issueWeekStart.getDay());
-        
-        const key = `${issueWeekStart.getDate().toString().padStart(2, '0')}/${(issueWeekStart.getMonth() + 1).toString().padStart(2, '0')}`;
-        if (weekData.hasOwnProperty(key)) {
-          weekData[key].count++;
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          const key = date.toLocaleDateString('pt-BR', { weekday: 'short' });
+          weekData[key] = { count: 0, date: new Date(date) };
         }
-      });
 
-      return Object.entries(weekData)
-        .sort((a, b) => a[1].weekStart.getTime() - b[1].weekStart.getTime())
-        .map(([week, data]) => ({
-          name: week,
-          value: data.count,
-          fullDate: week
-        }));
+        completedIssues.forEach(issue => {
+          const resolvedDate = new Date(issue.fields.resolutiondate);
+          const key = resolvedDate.toLocaleDateString('pt-BR', { weekday: 'short' });
+          if (weekData.hasOwnProperty(key)) {
+            weekData[key].count++;
+          }
+        });
+
+        return Object.entries(weekData)
+          .sort((a, b) => a[1].date.getTime() - b[1].date.getTime())
+          .map(([dayName, data]) => ({
+            name: dayName,
+            value: data.count,
+            fullDate: dayName
+          }));
+      } else {
+        // Últimas 8 semanas para visualização mais clara
+        const weekData: { [key: string]: { count: number; weekStart: Date } } = {};
+        
+        for (let i = 7; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - (i * 7));
+          const weekStart = new Date(date);
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Domingo como início
+          
+          const key = `${weekStart.getDate().toString().padStart(2, '0')}/${(weekStart.getMonth() + 1).toString().padStart(2, '0')}`;
+          weekData[key] = { count: 0, weekStart: new Date(weekStart) };
+        }
+
+        completedIssues.forEach(issue => {
+          // Usar APENAS resolutiondate para mostrar evolução real
+          const resolvedDate = new Date(issue.fields.resolutiondate);
+          const issueWeekStart = new Date(resolvedDate);
+          issueWeekStart.setDate(issueWeekStart.getDate() - issueWeekStart.getDay());
+          
+          const key = `${issueWeekStart.getDate().toString().padStart(2, '0')}/${(issueWeekStart.getMonth() + 1).toString().padStart(2, '0')}`;
+          if (weekData.hasOwnProperty(key)) {
+            weekData[key].count++;
+          }
+        });
+
+        return Object.entries(weekData)
+          .sort((a, b) => a[1].weekStart.getTime() - b[1].weekStart.getTime())
+          .map(([week, data]) => ({
+            name: week,
+            value: data.count,
+            fullDate: week
+          }));
+      }
     } else {
       // Últimos 12 meses
       for (let i = 11; i >= 0; i--) {
@@ -330,15 +417,15 @@ export function CompletionCharts({ issues, allIssues }: CompletionChartsProps) {
         };
       });
     }
-  }, [allIssues, issues, timeRange]);
+  }, [issues, timeRange, dashboardFilters]);
 
   const totalCompleted = completionData.reduce((sum, item) => sum + item.value, 0);
   const avgPerPeriod = totalCompleted / completionData.length;
 
   // Debug: Log para verificar os dados de evolução
   console.log("Completion Data Debug:", {
-    totalIssues: (allIssues || issues).length,
-    completedIssues: (allIssues || issues).filter(issue => {
+    filteredIssues: issues.length,
+    completedIssuesInPeriod: issues.filter(issue => {
       const isDone = issue.fields.status.statusCategory.key === "done" || 
                     issue.fields.status.statusCategory.name === "Done" ||
                     issue.fields.status.name.toLowerCase().includes("concluído") ||
@@ -350,6 +437,7 @@ export function CompletionCharts({ issues, allIssues }: CompletionChartsProps) {
     totalCompleted,
     avgPerPeriod,
     timeRange,
+    dashboardFilters,
     completionData
   });
 

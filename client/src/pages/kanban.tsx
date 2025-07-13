@@ -419,7 +419,11 @@ export default function KanbanPage() {
                   </TabsContent>
 
                   <TabsContent value="charts">
-                    <CompletionCharts issues={tasksCreatedInPeriod} allIssues={issues} />
+                    <CompletionCharts 
+                      issues={tasksCreatedInPeriod} 
+                      allIssues={issues} 
+                      dashboardFilters={filters}
+                    />
                   </TabsContent>
                 </Tabs>
               </div>
