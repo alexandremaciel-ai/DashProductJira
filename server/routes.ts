@@ -80,31 +80,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let jql = `project = "${projectKey}"`;
       
       // Add time period filter
-      if (filters?.timePeriod) {
+      if (filters?.timePeriod && filters.timePeriod !== "all") {
         let dateFilter = "";
+        const now = new Date();
+        
         switch (filters.timePeriod) {
           case "week":
-            dateFilter = " AND updated >= -1w";
+            // Esta semana: desde o início da semana (domingo) até agora
+            const startOfWeek = new Date(now);
+            startOfWeek.setDate(now.getDate() - now.getDay());
+            startOfWeek.setHours(0, 0, 0, 0);
+            dateFilter = ` AND created >= "${startOfWeek.toISOString().split('T')[0]}"`;
             break;
           case "month":
-            dateFilter = " AND updated >= -1M";
+            // Este mês: desde o início do mês até agora
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            dateFilter = ` AND created >= "${startOfMonth.toISOString().split('T')[0]}"`;
             break;
           case "quarter":
-            dateFilter = " AND updated >= -3M";
+            // Trimestre: últimos 3 meses
+            const startOfQuarter = new Date(now);
+            startOfQuarter.setMonth(now.getMonth() - 3);
+            dateFilter = ` AND created >= "${startOfQuarter.toISOString().split('T')[0]}"`;
             break;
           case "custom":
-            // Handle custom date range
+            // Handle custom date range - usar apenas as datas selecionadas
             if (filters.customStartDate && filters.customEndDate) {
-              dateFilter = ` AND updated >= "${filters.customStartDate}" AND updated <= "${filters.customEndDate}"`;
+              dateFilter = ` AND created >= "${filters.customStartDate}" AND created <= "${filters.customEndDate}"`;
             } else if (filters.customStartDate) {
-              dateFilter = ` AND updated >= "${filters.customStartDate}"`;
+              dateFilter = ` AND created >= "${filters.customStartDate}"`;
             } else if (filters.customEndDate) {
-              dateFilter = ` AND updated <= "${filters.customEndDate}"`;
+              dateFilter = ` AND created <= "${filters.customEndDate}"`;
             }
             break;
         }
         jql += dateFilter;
       }
+      // Se timePeriod for "all", não aplicamos filtro de data (mostra tudo)
 
       if (filters?.assignee && filters.assignee !== "all") {
         jql += ` AND assignee = "${filters.assignee}"`;

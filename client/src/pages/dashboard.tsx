@@ -32,7 +32,7 @@ export default function DashboardPage() {
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(null);
   const [aiEnabled, setAIEnabled] = useState(false);
   const [filters, setFilters] = useState<DashboardFilters>({
-    timePeriod: "week", // Mudar para week para consistência
+    timePeriod: "all", // Padrão agora é "Todo Período"
     sprint: undefined,
     assignee: undefined,
     issueTypes: [],

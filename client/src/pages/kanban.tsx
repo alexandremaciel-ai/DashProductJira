@@ -23,7 +23,7 @@ export default function KanbanPage() {
 
   // Usar os mesmos filtros que o dashboard - vamos criar um estado compartilhado
   const [filters, setFilters] = useState<DashboardFilters>({
-    timePeriod: "week", // Usar week para consistência com dashboard
+    timePeriod: "all", // Padrão agora é "Todo Período"
     sprint: undefined,
     assignee: undefined,
     issueTypes: [],
