@@ -140,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           },
           params: {
             jql,
-            fields: "summary,status,assignee,created,updated,resolutiondate,issuetype,customfield_10016", // customfield_10016 is usually story points
+            fields: "summary,description,status,assignee,created,updated,resolutiondate,issuetype,customfield_10016", // customfield_10016 is usually story points
             maxResults,
             startAt,
           },

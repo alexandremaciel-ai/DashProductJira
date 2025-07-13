@@ -632,6 +632,18 @@ export default function DashboardPage() {
                   <p className="text-gray-700 leading-relaxed">{selectedTask.fields.summary}</p>
                 </div>
 
+                {/* Description */}
+                {selectedTask.fields.description && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Descrição</h4>
+                    <div className="text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-4">
+                      <pre className="whitespace-pre-wrap font-sans text-sm">
+                        {selectedTask.fields.description}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+
                 {/* Task ID and Link */}
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="text-sm text-gray-600 mb-1">ID da Tarefa</div>

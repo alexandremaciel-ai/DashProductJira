@@ -20,6 +20,7 @@ export interface JiraIssue {
   key: string;
   fields: {
     summary: string;
+    description?: string;
     status: {
       name: string;
       statusCategory: {
