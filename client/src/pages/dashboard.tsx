@@ -145,26 +145,17 @@ export default function DashboardPage() {
     })).filter(item => item.value > 0); // Only show categories with issues
   }, [issues]);
 
-  // Developer Productivity Data - improved with better name handling
+  // Developer Productivity Data - usar nomes completos para melhor identificação
   const developerChartData = useMemo(() => {
     if (!developerProductivity.length) return [];
     
     return developerProductivity
       .filter(dev => dev.issuesResolved > 0) // Only show developers with resolved issues
       .map(dev => {
-        // Create a better display name - use first name + last initial or just initials if too long
-        let displayName = dev.name;
-        const nameParts = dev.name.split(" ");
-        if (nameParts.length > 1) {
-          if (dev.name.length > 15) {
-            displayName = nameParts.map(n => n[0]).join("");
-          } else {
-            displayName = `${nameParts[0]} ${nameParts[nameParts.length - 1][0]}.`;
-          }
-        }
-        
+        // Usar o nome completo sempre para melhor identificação
         return {
-          name: displayName,
+          name: dev.name, // Nome completo sem abreviação
+          fullName: dev.name, // Manter referência ao nome completo
           issues: dev.issuesResolved,
           storyPoints: dev.storyPoints,
         };

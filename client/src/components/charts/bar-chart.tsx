@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface BarChartProps {
   data: Array<{
     name: string;
+    fullName?: string;
     issues: number;
     storyPoints?: number;
   }>;
@@ -32,6 +33,19 @@ export function DeveloperProductivityChart({ data, metric }: BarChartProps) {
               backgroundColor: "white",
               border: "1px solid #e0e0e0",
               borderRadius: "8px",
+            }}
+            formatter={(value: any, name: string, props: any) => {
+              // Usar fullName se disponível, senão usar name
+              const developerName = props.payload.fullName || props.payload.name;
+              const metricLabel = metric === "issues" ? "issues" : "story points";
+              return [value, metricLabel];
+            }}
+            labelFormatter={(label: string, payload: any) => {
+              // Mostrar nome completo no label do tooltip
+              if (payload && payload.length > 0) {
+                return payload[0].payload.fullName || payload[0].payload.name;
+              }
+              return label;
             }}
           />
           <Bar 
