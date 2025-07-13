@@ -123,28 +123,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log("JQL Query:", jql);
 
-      const response = await axios.get(`${jiraUrl}/rest/api/3/search`, {
-        auth: {
-          username,
-          password: apiToken,
-        },
-        headers: {
-          'Accept': 'application/json',
-        },
-        params: {
-          jql,
-          fields: "summary,status,assignee,created,updated,resolutiondate,issuetype,customfield_10016", // customfield_10016 is usually story points
-          maxResults: 1000,
-          startAt: 0,
-        },
-      });
+      // Implement pagination to get all issues
+      let allIssues: any[] = [];
+      let startAt = 0;
+      const maxResults = 100; // Jira's default limit
+      let total = 0;
 
-      console.log("Issues found:", response.data.total);
-      console.log("Issues returned:", response.data.issues.length);
-      console.log("Start at:", response.data.startAt);
-      console.log("Max results:", response.data.maxResults);
+      do {
+        const response = await axios.get(`${jiraUrl}/rest/api/3/search`, {
+          auth: {
+            username,
+            password: apiToken,
+          },
+          headers: {
+            'Accept': 'application/json',
+          },
+          params: {
+            jql,
+            fields: "summary,status,assignee,created,updated,resolutiondate,issuetype,customfield_10016", // customfield_10016 is usually story points
+            maxResults,
+            startAt,
+          },
+        });
+
+        total = response.data.total;
+        allIssues = allIssues.concat(response.data.issues);
+        startAt += maxResults;
+
+        console.log(`Batch: ${startAt / maxResults}, Issues in batch: ${response.data.issues.length}, Total so far: ${allIssues.length}`);
+        
+      } while (allIssues.length < total && startAt < total);
+
+      console.log("Issues found:", total);
+      console.log("Issues returned:", allIssues.length);
       
-      res.json(response.data);
+      // Return the same structure as the original API
+      const finalResponse = {
+        expand: "schema,names",
+        startAt: 0,
+        maxResults: allIssues.length,
+        total: total,
+        issues: allIssues
+      };
+      
+      res.json(finalResponse);
     } catch (error: any) {
       console.error("Error fetching issues:", error.response?.data || error.message);
       res.status(500).json({ 
