@@ -3,12 +3,13 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, BarChart3, Columns3 } from "lucide-react";
+import { Loader2, BarChart3, Columns3, CheckCircle, Clock, Rocket } from "lucide-react";
 
 import { Header } from "@/components/header";
 import { Sidebar } from "@/components/sidebar";
 import { KanbanBoard } from "@/components/kanban-board";
 import { CompletionCharts } from "@/components/completion-charts";
+import { MetricsCard } from "@/components/metrics-card";
 
 import { useJiraAuth } from "@/hooks/use-jira-auth";
 import { useJiraIssues, useJiraSprints, useProjectMembers } from "@/hooks/use-jira-data";
@@ -187,6 +188,105 @@ export default function KanbanPage() {
     }).length
   };
 
+  // Helper function to get tasks from previous period for comparison (same logic as dashboard)
+  const getTasksFromPreviousPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
+    const now = new Date();
+    let startDate: Date;
+    let endDate: Date;
+
+    switch (filters.timePeriod) {
+      case 'week':
+        startDate = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000); // 14 days ago
+        endDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // 7 days ago
+        break;
+      case 'month':
+        startDate = new Date(now.getTime() - 56 * 24 * 60 * 60 * 1000); // 8 weeks ago
+        endDate = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000); // 4 weeks ago
+        break;
+      case 'quarter':
+        startDate = new Date(now.getTime() - 168 * 24 * 60 * 60 * 1000); // 24 weeks ago
+        endDate = new Date(now.getTime() - 84 * 24 * 60 * 60 * 1000); // 12 weeks ago
+        break;
+      case 'custom':
+      case 'all':
+      default:
+        return []; // No comparison for custom or all periods
+    }
+
+    return allIssues.filter(issue => {
+      const createdDate = new Date(issue.fields.created);
+      return createdDate >= startDate && createdDate <= endDate;
+    });
+  };
+
+  // Calculate percentage change
+  const calculatePercentageChange = (current: number, previous: number): number => {
+    if (previous === 0) {
+      return current > 0 ? 100 : 0;
+    }
+    return Math.round(((current - previous) / previous) * 100);
+  };
+
+  // Get previous period data for comparisons
+  const previousPeriodTasks = getTasksFromPreviousPeriod(issues, filters);
+
+  // Calculate previous period stats
+  const previousStats = {
+    total: previousPeriodTasks.length,
+    todo: previousPeriodTasks.filter(issue => {
+      const statusCategoryName = issue.fields.status.statusCategory.name;
+      const statusName = issue.fields.status.name.toLowerCase();
+      
+      return statusCategoryName === "To Do" || 
+             statusCategoryName === "new" ||
+             statusName.includes("aberto") ||
+             statusName.includes("novo") ||
+             statusName.includes("backlog");
+    }).length,
+    inProgress: previousPeriodTasks.filter(issue => {
+      const statusCategoryName = issue.fields.status.statusCategory.name;
+      const statusName = issue.fields.status.name.toLowerCase();
+      
+      return statusCategoryName === "In Progress" || 
+             statusCategoryName === "indeterminate" ||
+             statusName.includes("progresso") ||
+             statusName.includes("progress") ||
+             statusName.includes("desenvolvimento") ||
+             statusName.includes("em andamento");
+    }).length,
+    done: previousPeriodTasks.filter(issue => {
+      const statusCategoryName = issue.fields.status.statusCategory.name;
+      const statusName = issue.fields.status.name.toLowerCase();
+      
+      return statusCategoryName === "Done" || 
+             statusCategoryName === "complete" ||
+             statusName.includes("concluído") ||
+             statusName.includes("done") ||
+             statusName.includes("fechado") ||
+             statusName.includes("resolvido");
+    }).length
+  };
+
+  // Calculate percentage changes
+  const changes = {
+    total: calculatePercentageChange(stats.total, previousStats.total),
+    todo: calculatePercentageChange(stats.todo, previousStats.todo),
+    inProgress: calculatePercentageChange(stats.inProgress, previousStats.inProgress),
+    done: calculatePercentageChange(stats.done, previousStats.done)
+  };
+
+  // Helper function to get period description
+  const getPeriodDescription = (timePeriod: string) => {
+    switch (timePeriod) {
+      case 'week': return 'esta semana';
+      case 'month': return 'este mês';
+      case 'quarter': return 'este trimestre';
+      case 'custom': return 'no período personalizado';
+      case 'all':
+      default: return 'em todo período';
+    }
+  };
+
   // Debug: Log para verificar se os números estão corretos
   console.log("Kanban Stats Debug:", {
     filter: filters.timePeriod,
@@ -195,7 +295,8 @@ export default function KanbanPage() {
     todoCount: stats.todo,
     inProgressCount: stats.inProgress,
     doneCount: stats.done,
-    thisWeekCount: stats.thisWeek
+    thisWeekCount: stats.thisWeek,
+    changes: changes
   });
 
   if (!credentials || !selectedProject) {
@@ -236,42 +337,44 @@ export default function KanbanPage() {
           </div>
         ) : (
           <>
-            {/* Statistics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-              <Card className="border border-gray-200">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-                  <div className="text-sm text-gray-600">Total de Tarefas</div>
-                  <div className="text-xs text-gray-500">Criadas no período</div>
-                </CardContent>
-              </Card>
-              <Card className="border border-gray-200">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-gray-600">{stats.todo}</div>
-                  <div className="text-sm text-gray-600">A Fazer</div>
-                  <div className="text-xs text-gray-500">Criadas no período</div>
-                </CardContent>
-              </Card>
-              <Card className="border border-gray-200">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">{stats.inProgress}</div>
-                  <div className="text-sm text-gray-600">Em Progresso</div>
-                  <div className="text-xs text-gray-500">Criadas no período</div>
-                </CardContent>
-              </Card>
-              <Card className="border border-gray-200">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-green-600">{stats.done}</div>
-                  <div className="text-sm text-gray-600">Concluídas</div>
-                  <div className="text-xs text-gray-500">Criadas no período</div>
-                </CardContent>
-              </Card>
-              <Card className="border border-gray-200">
-                <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-purple-600">{stats.thisWeek}</div>
-                  <div className="text-sm text-gray-600">Esta Semana</div>
-                </CardContent>
-              </Card>
+            {/* Advanced Statistics Cards - Same as Dashboard */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <MetricsCard
+                title="Total de Tarefas"
+                value={stats.total}
+                change={changes.total}
+                icon={<CheckCircle className="text-blue-600" size={20} />}
+                description={`Criadas ${getPeriodDescription(filters.timePeriod)}`}
+                iconBgColor="bg-blue-100"
+                periodType={filters.timePeriod}
+              />
+              <MetricsCard
+                title="A Fazer"
+                value={stats.todo}
+                change={changes.todo}
+                icon={<Clock className="text-gray-600" size={20} />}
+                description={`Criadas ${getPeriodDescription(filters.timePeriod)} - pendentes`}
+                iconBgColor="bg-gray-100"
+                periodType={filters.timePeriod}
+              />
+              <MetricsCard
+                title="Em Progresso"
+                value={stats.inProgress}
+                change={changes.inProgress}
+                icon={<Rocket className="text-yellow-600" size={20} />}
+                description={`Criadas ${getPeriodDescription(filters.timePeriod)} - em andamento`}
+                iconBgColor="bg-yellow-100"
+                periodType={filters.timePeriod}
+              />
+              <MetricsCard
+                title="Concluídas"
+                value={stats.done}
+                change={changes.done}
+                icon={<CheckCircle className="text-green-600" size={20} />}
+                description={`Criadas ${getPeriodDescription(filters.timePeriod)} - finalizadas`}
+                iconBgColor="bg-green-100"
+                periodType={filters.timePeriod}
+              />
             </div>
 
             {/* Sidebar and Content Layout */}
