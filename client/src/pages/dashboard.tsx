@@ -211,46 +211,7 @@ export default function DashboardPage() {
     return text.trim();
   };
 
-  const debugTask = async (taskKey: string) => {
-    if (!credentials) return;
-    
-    try {
-      const response = await fetch('/api/jira/debug-issue', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...credentials,
-          issueKey: taskKey
-        }),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`=== DEBUGGING TASK ${taskKey} ===`);
-        console.log('Description field structure:', JSON.stringify(data.fields?.description, null, 2));
-        console.log('Description type:', typeof data.fields?.description);
-        
-        if (data.fields?.description) {
-          console.log('Extracted text with current function:', extractTextFromADF(data.fields.description));
-        }
-        
-        return data;
-      }
-    } catch (error) {
-      console.error('Error debugging task:', error);
-    }
-  };
-
-  const handleTaskClick = async (task: JiraIssue) => {
-    console.log('Selected task:', task);
-    
-    // Debug da tarefa CDCA-281 especificamente
-    if (task.key === 'CDCA-281' || task.key === 'CDCA-193') {
-      await debugTask(task.key);
-    }
-    
+  const handleTaskClick = (task: JiraIssue) => {
     setSelectedTask(task);
     setIsTaskDialogOpen(true);
   };

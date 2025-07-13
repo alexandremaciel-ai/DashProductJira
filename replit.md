@@ -17,6 +17,7 @@ Card consistency: Fixed discrepancy between card statistics and kanban board dat
 Advanced cards: Kanban now uses same professional MetricsCard components as dashboard with comparison statistics.
 Professional charts: Implemented 4-tab chart system with Velocity Chart, Cycle Time Analysis, Team Performance, and Issue Type Distribution.
 Complete documentation: Created comprehensive docs folder with 9 essential documents covering all aspects of the project.
+Task description extraction: Fixed task popup to correctly extract and display Jira task descriptions from Atlassian Document Format (ADF) instead of comments.
 
 ## System Architecture
 
