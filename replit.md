@@ -7,6 +7,7 @@ This is a full-stack web application built for monitoring and analyzing develope
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Features requested: Kanban board with task details, completion charts by day/week/month.
 
 ## System Architecture
 
@@ -45,6 +46,8 @@ Preferred communication style: Simple, everyday language.
 - **Interactive Charts**: Line charts for trends, pie charts for distributions, bar charts for comparisons
 - **Filtering System**: Time period, sprint, assignee, and issue type filters
 - **Export Functionality**: PDF and CSV report generation
+- **Kanban Board**: Visual task management with drag-and-drop interface, task details modal
+- **Completion Charts**: Dynamic charts showing task completion by day, week, and month
 
 ### Data Processing
 - **API Integration**: Jira REST API v3 for fetching projects, issues, sprints

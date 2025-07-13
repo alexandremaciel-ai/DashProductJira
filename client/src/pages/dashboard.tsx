@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle, Rocket, Clock, Bug, Lightbulb, TrendingUp, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Rocket, Clock, Bug, Lightbulb, TrendingUp, Loader2, Columns3 } from "lucide-react";
 
 import { Header } from "@/components/header";
 import { Sidebar } from "@/components/sidebar";
@@ -167,6 +168,17 @@ export default function DashboardPage() {
             </div>
           ) : (
             <>
+              {/* Navigation to Kanban */}
+              <div className="flex items-center justify-between mb-6">
+                <div></div>
+                <Button
+                  onClick={() => setLocation("/kanban")}
+                  className="bg-blue-600 text-white hover:bg-blue-700"
+                >
+                  <Columns3 className="mr-2" size={16} />
+                  Ver Quadro Kanban
+                </Button>
+              </div>
               {/* Metrics Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <MetricsCard
