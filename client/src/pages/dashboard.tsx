@@ -10,14 +10,14 @@ import { Sidebar } from "@/components/sidebar";
 import { Footer } from "@/components/footer";
 import { MetricsCard } from "@/components/metrics-card";
 
-import { DeveloperProductivityChart } from "@/components/charts/bar-chart";
+
 
 import { useJiraAuth } from "@/hooks/use-jira-auth";
 import { 
   useJiraIssues, 
   useJiraSprints, 
   useProductivityMetrics, 
-  useDeveloperProductivity,
+
   useAIInsights,
   useProjectMembers 
 } from "@/hooks/use-jira-data";
@@ -38,7 +38,7 @@ export default function DashboardPage() {
     customStartDate: undefined,
     customEndDate: undefined,
   });
-  const [productivityMetric, setProductivityMetric] = useState<"issues" | "storyPoints">("issues");
+
 
   // Load stored data on mount
   useEffect(() => {
@@ -81,7 +81,6 @@ export default function DashboardPage() {
   // Calculate metrics
   const issues = issuesData?.issues || [];
   const metrics = useProductivityMetrics(issues);
-  const developerProductivity = useDeveloperProductivity(issues);
   
   // AI Insights
   const { data: aiInsights, isLoading: aiLoading } = useAIInsights(metrics, aiEnabled);
@@ -123,43 +122,25 @@ export default function DashboardPage() {
     });
   };
 
-  // Developer Productivity Data - usar a mesma lógica de filtro dos cards
-  const developerChartData = useMemo(() => {
+  // Tarefas Concluídas - filtradas pelo período selecionado
+  const completedTasks = useMemo(() => {
     if (!allIssuesData?.issues) return [];
     
-    // Usar a mesma lógica de filtro dos cards - issues criadas no período
+    // Pegar tarefas criadas no período selecionado que estão concluídas
     const currentPeriodTasks = getTasksCreatedInPeriod(allIssuesData.issues, filters);
     
-    // Calcular produtividade baseada nas tarefas do período selecionado
-    const developerStats = new Map<string, { name: string; issues: number; storyPoints: number }>();
-    
-    currentPeriodTasks.forEach(issue => {
-      if (issue.fields.assignee) {
-        const assigneeName = issue.fields.assignee.displayName;
-        const current = developerStats.get(assigneeName) || { 
-          name: assigneeName, 
-          issues: 0, 
-          storyPoints: 0 
-        };
-        
-        current.issues += 1;
-        current.storyPoints += issue.fields.customfield_10016 || 0;
-        
-        developerStats.set(assigneeName, current);
-      }
-    });
-    
-    return Array.from(developerStats.values())
-      .filter(dev => dev.issues > 0) // Only show developers with issues
-      .map(dev => ({
-        name: dev.name, // Nome completo sem abreviação
-        fullName: dev.name, // Manter referência ao nome completo
-        issues: dev.issues,
-        storyPoints: dev.storyPoints,
-      }))
-      .sort((a, b) => productivityMetric === "issues" ? b.issues - a.issues : b.storyPoints - a.storyPoints)
-      .slice(0, 10); // Show top 10 developers
-  }, [allIssuesData?.issues, filters, productivityMetric]);
+    return currentPeriodTasks
+      .filter(issue => 
+        issue.fields.status.statusCategory.name === "Done" || 
+        issue.fields.status.statusCategory.key === "done"
+      )
+      .sort((a, b) => {
+        // Ordenar por data de resolução (mais recente primeiro)
+        const dateA = new Date(a.fields.resolutiondate || a.fields.updated);
+        const dateB = new Date(b.fields.resolutiondate || b.fields.updated);
+        return dateB.getTime() - dateA.getTime();
+      });
+  }, [allIssuesData?.issues, filters]);
 
   // Event handlers
   const handleSwitchProject = () => setLocation("/projects");
@@ -170,13 +151,13 @@ export default function DashboardPage() {
 
   const handleExportCSV = () => {
     if (selectedProject) {
-      exportUtils.exportToCSV(metrics, developerProductivity, selectedProject.name);
+      exportUtils.exportToCSV(metrics, [], selectedProject.name);
     }
   };
 
   const handleExportPDF = () => {
     if (selectedProject) {
-      exportUtils.exportToPDF(metrics, developerProductivity, selectedProject.name);
+      exportUtils.exportToPDF(metrics, [], selectedProject.name);
     }
   };
 
@@ -388,24 +369,65 @@ export default function DashboardPage() {
 
 
 
-              {/* Developer Productivity Chart */}
+              {/* Tarefas Concluídas Grid */}
               <Card className="border border-gray-200 mb-8">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Produtividade dos Desenvolvedores</CardTitle>
-                    <Select value={productivityMetric} onValueChange={(value: "issues" | "storyPoints") => setProductivityMetric(value)}>
-                      <SelectTrigger className="w-48">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="issues">Issues Resolvidas</SelectItem>
-                        <SelectItem value="storyPoints">Story Points</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  <CardTitle className="text-lg">
+                    Tarefas Concluídas {getPeriodDescription(filters.timePeriod)} ({completedTasks.length})
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <DeveloperProductivityChart data={developerChartData} metric={productivityMetric} />
+                  {completedTasks.length > 0 ? (
+                    <div className="overflow-x-auto">
+                      <table className="w-full border-collapse">
+                        <thead>
+                          <tr className="border-b border-gray-200">
+                            <th className="text-left p-3 font-medium text-gray-900">Task</th>
+                            <th className="text-left p-3 font-medium text-gray-900">Responsável</th>
+                            <th className="text-left p-3 font-medium text-gray-900">Data de Criação</th>
+                            <th className="text-left p-3 font-medium text-gray-900">Data de Resolução</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {completedTasks.map((task) => (
+                            <tr key={task.id} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="p-3">
+                                <div>
+                                  <div className="font-medium text-gray-900">{task.key}</div>
+                                  <div className="text-sm text-gray-600 truncate max-w-md" title={task.fields.summary}>
+                                    {task.fields.summary}
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="p-3">
+                                <span className="text-gray-900">
+                                  {task.fields.assignee?.displayName || 'Não atribuído'}
+                                </span>
+                              </td>
+                              <td className="p-3">
+                                <span className="text-gray-600">
+                                  {new Date(task.fields.created).toLocaleDateString('pt-BR')}
+                                </span>
+                              </td>
+                              <td className="p-3">
+                                <span className="text-green-600">
+                                  {task.fields.resolutiondate 
+                                    ? new Date(task.fields.resolutiondate).toLocaleDateString('pt-BR')
+                                    : new Date(task.fields.updated).toLocaleDateString('pt-BR')
+                                  }
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <CheckCircle className="mx-auto mb-4 text-gray-300" size={48} />
+                      <p>Nenhuma tarefa concluída encontrada {getPeriodDescription(filters.timePeriod)}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
