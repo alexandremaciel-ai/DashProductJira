@@ -153,8 +153,59 @@ export default function DashboardPage() {
     setLocation("/");
   };
 
+  // Função para extrair texto da descrição do Jira (ADF format)
+  const extractTextFromADF = (adfContent: any): string => {
+    if (!adfContent || typeof adfContent !== 'object') {
+      return '';
+    }
+
+    // Se é uma string, retorna diretamente
+    if (typeof adfContent === 'string') {
+      return adfContent;
+    }
+
+    let text = '';
+
+    // Função recursiva para extrair texto de nós ADF
+    const extractFromNode = (node: any): string => {
+      if (!node) return '';
+
+      // Se tem texto direto
+      if (node.text) {
+        return node.text;
+      }
+
+      // Se tem conteúdo (array de nós filhos)
+      if (node.content && Array.isArray(node.content)) {
+        return node.content.map(extractFromNode).join('');
+      }
+
+      // Se tem marks (formatação) mas ainda tem texto
+      if (node.marks && node.text) {
+        return node.text;
+      }
+
+      return '';
+    };
+
+    // Se o ADF tem content (estrutura padrão)
+    if (adfContent.content && Array.isArray(adfContent.content)) {
+      text = adfContent.content.map((node: any) => {
+        const nodeText = extractFromNode(node);
+        // Adicionar quebra de linha após parágrafos
+        return node.type === 'paragraph' ? nodeText + '\n' : nodeText;
+      }).join('');
+    } else {
+      // Tentar extrair diretamente
+      text = extractFromNode(adfContent);
+    }
+
+    return text.trim();
+  };
+
   const handleTaskClick = (task: JiraIssue) => {
     console.log('Selected task:', task); // Debug para ver a estrutura
+    console.log('Description field:', task.fields.description); // Debug específico da descrição
     setSelectedTask(task);
     setIsTaskDialogOpen(true);
   };
@@ -643,12 +694,9 @@ export default function DashboardPage() {
                   <div>
                     <h4 className="font-medium text-gray-900 mb-2">Descrição</h4>
                     <div className="text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-4">
-                      <pre className="whitespace-pre-wrap font-sans text-sm">
-                        {typeof selectedTask.fields.description === 'string' 
-                          ? selectedTask.fields.description 
-                          : JSON.stringify(selectedTask.fields.description, null, 2)
-                        }
-                      </pre>
+                      <div className="whitespace-pre-wrap text-sm">
+                        {extractTextFromADF(selectedTask.fields.description) || 'Descrição não disponível'}
+                      </div>
                     </div>
                   </div>
                 )}
