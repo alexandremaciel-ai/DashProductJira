@@ -32,7 +32,7 @@ const columns: KanbanColumn[] = [
   },
   {
     id: "inprogress",
-    title: "Em Progresso",
+    title: "Em Andamento",
     statusCategory: "In Progress",
     color: "bg-blue-100 border-blue-300",
     icon: <Clock className="text-blue-600" size={16} />
@@ -257,7 +257,7 @@ export function KanbanBoard({ issues, credentials, projectKey }: KanbanBoardProp
     },
     {
       id: "inprogress", 
-      title: "Em Progresso",
+      title: "Em Andamento",
       statuses: statusData.statusCategories.inprogress,
       color: "bg-blue-100 border-blue-300",
       icon: <Clock className="text-blue-600" size={16} />

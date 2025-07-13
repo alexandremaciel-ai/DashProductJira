@@ -358,7 +358,7 @@ export default function KanbanPage() {
                 periodType={filters.timePeriod}
               />
               <MetricsCard
-                title="Em Progresso"
+                title="Em Andamento"
                 value={stats.inProgress}
                 change={changes.inProgress}
                 icon={<Rocket className="text-yellow-600" size={20} />}

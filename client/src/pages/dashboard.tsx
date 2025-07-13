@@ -416,7 +416,7 @@ export default function DashboardPage() {
                   periodType={filters.timePeriod}
                 />
                 <MetricsCard
-                  title="Em Progresso"
+                  title="Em Andamento"
                   value={currentStats.inProgress}
                   change={changes.inProgress}
                   icon={<Rocket className="text-yellow-600" size={20} />}
