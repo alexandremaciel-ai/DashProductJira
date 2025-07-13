@@ -105,7 +105,7 @@ export default function KanbanPage() {
   };
 
   const stats = {
-    total: issues.length,
+    total: issues.length, // Total baseado no filtro atual aplicado
     todo: getStatsByStatus("To Do").length,
     inProgress: getStatsByStatus("In Progress").length,
     done: getStatsByStatus("Done").length,
@@ -117,6 +117,16 @@ export default function KanbanPage() {
       return resolved >= weekAgo;
     }).length
   };
+
+  // Debug: Log para verificar se os números estão corretos
+  console.log("Kanban Stats Debug:", {
+    filter: filters.timePeriod,
+    totalIssues: issues.length,
+    todoCount: stats.todo,
+    inProgressCount: stats.inProgress,
+    doneCount: stats.done,
+    thisWeekCount: stats.thisWeek
+  });
 
   if (!credentials || !selectedProject) {
     return null; // Will redirect in useEffect

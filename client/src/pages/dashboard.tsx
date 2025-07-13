@@ -261,56 +261,64 @@ export default function DashboardPage() {
                   Ver Quadro Kanban
                 </Button>
               </div>
-              {/* Metrics Cards */}
+              {/* Metrics Cards - Aligned with Filter Data */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 <MetricsCard
-                  title="Tarefas Entregues"
-                  value={metrics.tasksDelivered}
-                  change={metrics.tasksDeliveredChange}
-                  icon={<CheckCircle className="text-green-600" size={20} />}
-                  description="Issues resolvidas esta semana"
-                  iconBgColor="bg-green-100"
-                />
-                <MetricsCard
-                  title="Velocidade da Equipe"
-                  value={metrics.velocity}
-                  change={metrics.velocityChange}
-                  icon={<Rocket className="text-blue-600" size={20} />}
-                  description="Story points neste sprint"
+                  title="Total de Tarefas"
+                  value={issues.length}
+                  change={0}
+                  icon={<CheckCircle className="text-blue-600" size={20} />}
+                  description={`Filtro: ${filters.timePeriod === 'all' ? 'Todo Período' : filters.timePeriod === 'week' ? 'Esta Semana' : filters.timePeriod === 'month' ? 'Este Mês' : filters.timePeriod === 'quarter' ? 'Trimestre' : 'Personalizado'}`}
                   iconBgColor="bg-blue-100"
                 />
                 <MetricsCard
-                  title="Tempo Médio de Ciclo"
-                  value={`${metrics.cycleTime} dias`}
-                  change={metrics.cycleTimeChange}
-                  icon={<Clock className="text-yellow-600" size={20} />}
-                  description="Dias por tarefa"
+                  title="A Fazer"
+                  value={issues.filter(i => i.fields.status.statusCategory.name === "To Do").length}
+                  change={0}
+                  icon={<Clock className="text-gray-600" size={20} />}
+                  description="Tarefas pendentes"
+                  iconBgColor="bg-gray-100"
+                />
+                <MetricsCard
+                  title="Em Progresso"
+                  value={issues.filter(i => i.fields.status.statusCategory.name === "In Progress").length}
+                  change={0}
+                  icon={<Rocket className="text-yellow-600" size={20} />}
+                  description="Tarefas em andamento"
                   iconBgColor="bg-yellow-100"
                 />
                 <MetricsCard
-                  title="Taxa de Bugs"
-                  value={`${metrics.bugRate}%`}
-                  change={metrics.bugRateChange}
-                  icon={<Bug className="text-red-600" size={20} />}
-                  description="Bugs vs total de issues"
-                  iconBgColor="bg-red-100"
+                  title="Concluídas"
+                  value={issues.filter(i => i.fields.status.statusCategory.name === "Done").length}
+                  change={0}
+                  icon={<CheckCircle className="text-green-600" size={20} />}
+                  description="Tarefas finalizadas"
+                  iconBgColor="bg-green-100"
                 />
               </div>
 
               {/* Debug Card - Metrics Breakdown */}
               <Card className="border border-blue-200 bg-blue-50 mb-6">
                 <CardHeader>
-                  <CardTitle className="text-lg text-blue-800">Debug: Dados Calculados</CardTitle>
+                  <CardTitle className="text-lg text-blue-800">Debug: Dados do Filtro Atual ({filters.timePeriod})</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                     <div>
-                      <p className="font-semibold text-blue-700">Total de Tarefas:</p>
+                      <p className="font-semibold text-blue-700">Total de Tarefas (Filtro Atual):</p>
                       <p className="text-blue-600">{issues.length}</p>
                     </div>
                     <div>
-                      <p className="font-semibold text-blue-700">Tarefas Concluídas (Semana):</p>
-                      <p className="text-blue-600">{metrics.tasksDelivered}</p>
+                      <p className="font-semibold text-blue-700">A Fazer:</p>
+                      <p className="text-blue-600">{issues.filter(i => i.fields.status.statusCategory.name === "To Do").length}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-700">Em Progresso:</p>
+                      <p className="text-blue-600">{issues.filter(i => i.fields.status.statusCategory.name === "In Progress").length}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-blue-700">Concluídas:</p>
+                      <p className="text-blue-600">{issues.filter(i => i.fields.status.statusCategory.name === "Done").length}</p>
                     </div>
                     <div>
                       <p className="font-semibold text-blue-700">Story Points (Semana):</p>
