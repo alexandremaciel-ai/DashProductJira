@@ -663,9 +663,11 @@ export default function DashboardPage() {
                     <div>
                       <div className="text-sm text-gray-600">Story Points</div>
                       <div className="font-medium">
-                        {typeof selectedTask.fields.customfield_10016 === 'object' 
-                          ? JSON.stringify(selectedTask.fields.customfield_10016)
-                          : selectedTask.fields.customfield_10016
+                        {typeof selectedTask.fields.customfield_10016 === 'number' 
+                          ? selectedTask.fields.customfield_10016
+                          : typeof selectedTask.fields.customfield_10016 === 'string'
+                          ? selectedTask.fields.customfield_10016
+                          : 'Não definido'
                         }
                       </div>
                     </div>
