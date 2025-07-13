@@ -88,24 +88,43 @@ export default function DashboardPage() {
 
 
 
-  // Developer Productivity Data - usar nomes completos para melhor identificação
+  // Developer Productivity Data - usar a mesma lógica de filtro dos cards
   const developerChartData = useMemo(() => {
-    if (!developerProductivity.length) return [];
+    if (!allIssuesData?.issues) return [];
     
-    return developerProductivity
-      .filter(dev => dev.issuesResolved > 0) // Only show developers with resolved issues
-      .map(dev => {
-        // Usar o nome completo sempre para melhor identificação
-        return {
-          name: dev.name, // Nome completo sem abreviação
-          fullName: dev.name, // Manter referência ao nome completo
-          issues: dev.issuesResolved,
-          storyPoints: dev.storyPoints,
+    // Usar a mesma lógica de filtro dos cards - issues criadas no período
+    const currentPeriodTasks = getTasksCreatedInPeriod(allIssuesData.issues, filters);
+    
+    // Calcular produtividade baseada nas tarefas do período selecionado
+    const developerStats = new Map<string, { name: string; issues: number; storyPoints: number }>();
+    
+    currentPeriodTasks.forEach(issue => {
+      if (issue.fields.assignee) {
+        const assigneeName = issue.fields.assignee.displayName;
+        const current = developerStats.get(assigneeName) || { 
+          name: assigneeName, 
+          issues: 0, 
+          storyPoints: 0 
         };
-      })
+        
+        current.issues += 1;
+        current.storyPoints += issue.fields.customfield_10016 || 0;
+        
+        developerStats.set(assigneeName, current);
+      }
+    });
+    
+    return Array.from(developerStats.values())
+      .filter(dev => dev.issues > 0) // Only show developers with issues
+      .map(dev => ({
+        name: dev.name, // Nome completo sem abreviação
+        fullName: dev.name, // Manter referência ao nome completo
+        issues: dev.issues,
+        storyPoints: dev.storyPoints,
+      }))
       .sort((a, b) => productivityMetric === "issues" ? b.issues - a.issues : b.storyPoints - a.storyPoints)
       .slice(0, 10); // Show top 10 developers
-  }, [developerProductivity, productivityMetric]);
+  }, [allIssuesData?.issues, filters, productivityMetric]);
 
   // Event handlers
   const handleSwitchProject = () => setLocation("/projects");
