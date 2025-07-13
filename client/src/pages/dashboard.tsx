@@ -435,61 +435,6 @@ export default function DashboardPage() {
                 />
               </div>
 
-              {/* Debug Card - Metrics Breakdown */}
-              <Card className="border border-blue-200 bg-blue-50 mb-6">
-                <CardHeader>
-                  <CardTitle className="text-lg text-blue-800">Debug: Dados do Filtro Atual ({filters.timePeriod})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                    <div>
-                      <p className="font-semibold text-blue-700">Período Atual:</p>
-                      <p className="text-blue-600">{currentStats.total} tarefas criadas</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700">Período Anterior:</p>
-                      <p className="text-blue-600">{previousStats.total} tarefas criadas</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700">Mudança Total:</p>
-                      <p className="text-blue-600">{changes.total > 0 ? '+' : ''}{changes.total}%</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700">Comparação com:</p>
-                      <p className="text-blue-600">
-                        {filters.timePeriod === 'week' ? 'Semana anterior' : 
-                         filters.timePeriod === 'month' ? 'Mês anterior' : 
-                         filters.timePeriod === 'quarter' ? 'Trimestre anterior' : 'N/A'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700">Story Points (Semana):</p>
-                      <p className="text-blue-600">{metrics.velocity}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700">Desenvolvedores Ativos:</p>
-                      <p className="text-blue-600">{developerProductivity.length}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700">Distribuição de Status:</p>
-                      <p className="text-blue-600">{issueDistributionData.map(d => `${d.name}: ${d.value}`).join(", ")}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700">Tipos de Issue:</p>
-                      <p className="text-blue-600">{[...new Set(issues.map(i => i.fields.issuetype.name))].slice(0, 3).join(", ")}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700">Gráfico Dev:</p>
-                      <p className="text-blue-600">{developerChartData.length} desenvolvedores</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-blue-700">Evolução (7 dias):</p>
-                      <p className="text-blue-600">{taskEvolutionData.reduce((sum, d) => sum + d.value, 0)} tarefas</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Charts Section */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 <Card className="border border-gray-200">

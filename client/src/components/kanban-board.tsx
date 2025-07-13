@@ -342,15 +342,6 @@ export function KanbanBoard({ issues, credentials, projectKey }: KanbanBoardProp
 
   return (
     <div className="space-y-4">
-      {/* Debug info para entender os dados */}
-      {statusData && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            <strong>Status dinâmicos carregados:</strong> {statusData.allStatuses.length} status encontrados para este projeto.
-          </p>
-        </div>
-      )}
-      
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {dynamicColumns.map(column => {
           const columnIssues = statusData 
