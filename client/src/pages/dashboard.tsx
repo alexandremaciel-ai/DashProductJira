@@ -154,6 +154,7 @@ export default function DashboardPage() {
   };
 
   const handleTaskClick = (task: JiraIssue) => {
+    console.log('Selected task:', task); // Debug para ver a estrutura
     setSelectedTask(task);
     setIsTaskDialogOpen(true);
   };
@@ -604,7 +605,12 @@ export default function DashboardPage() {
                     <TrendingUp className="text-blue-500" size={16} />
                     <div>
                       <div className="text-sm text-gray-600">Story Points</div>
-                      <div className="font-medium">{selectedTask.fields.customfield_10016}</div>
+                      <div className="font-medium">
+                        {typeof selectedTask.fields.customfield_10016 === 'object' 
+                          ? JSON.stringify(selectedTask.fields.customfield_10016)
+                          : selectedTask.fields.customfield_10016
+                        }
+                      </div>
                     </div>
                   </div>
                 )}
@@ -638,7 +644,10 @@ export default function DashboardPage() {
                     <h4 className="font-medium text-gray-900 mb-2">Descrição</h4>
                     <div className="text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-4">
                       <pre className="whitespace-pre-wrap font-sans text-sm">
-                        {selectedTask.fields.description}
+                        {typeof selectedTask.fields.description === 'string' 
+                          ? selectedTask.fields.description 
+                          : JSON.stringify(selectedTask.fields.description, null, 2)
+                        }
                       </pre>
                     </div>
                   </div>
