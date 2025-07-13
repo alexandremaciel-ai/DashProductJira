@@ -11,6 +11,8 @@ Features requested: Kanban board with task details, completion charts by day/wee
 Translation: Complete Portuguese (Brazilian) translation implemented across all components.
 Filter consistency: Fixed discrepancies between dashboard and kanban statistics.
 Custom dates: Calendar picker implemented for custom period selection.
+Time filters: All period filters working correctly (Esta Semana, Este Mês, Trimestre, Todo Período, Personalizado).
+Default view: Changed to "Todo Período" to show all data by default.
 
 ## System Architecture
 
@@ -53,6 +55,12 @@ Custom dates: Calendar picker implemented for custom period selection.
 - **Completion Charts**: Dynamic charts showing task completion by day, week, and month
 - **Custom Date Picker**: Calendar interface for custom period selection with date range support
 - **Consistent Filtering**: Unified filter logic between dashboard and kanban views
+- **Smart Time Filters**: Optimized JQL queries for accurate period filtering:
+  - Esta Semana: últimos 7 dias (updated >= -1w)
+  - Este Mês: últimas 4 semanas (updated >= -4w)
+  - Trimestre: últimas 12 semanas (updated >= -12w)
+  - Todo Período: sem filtro de data
+  - Personalizado: período selecionado pelo usuário
 
 ### Data Processing
 - **API Integration**: Jira REST API v3 for fetching projects, issues, sprints
