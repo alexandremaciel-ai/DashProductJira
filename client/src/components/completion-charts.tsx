@@ -389,7 +389,11 @@ export function CompletionCharts({ issues }: CompletionChartsProps) {
                     <Tooltip 
                       labelStyle={{ color: '#374151' }}
                       contentStyle={{ backgroundColor: '#f9fafb', border: '1px solid #e5e7eb' }}
-                      formatter={(value, name) => [value, name === 'storyPoints' ? 'Story Points' : 'Issues']}
+                      formatter={(value, name) => {
+                        if (name === 'storyPoints') return [`${value}`, 'Story Points'];
+                        if (name === 'issues') return [`${value}`, 'Issues'];
+                        return [`${value}`, name];
+                      }}
                     />
                     <Bar dataKey="storyPoints" fill="#3b82f6" name="Story Points" radius={[4, 4, 0, 0]} />
                     <Bar dataKey="issues" fill="#10b981" name="Issues" radius={[4, 4, 0, 0]} />
