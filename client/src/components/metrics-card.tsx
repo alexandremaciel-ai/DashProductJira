@@ -8,6 +8,7 @@ interface MetricsCardProps {
   icon: React.ReactNode;
   description: string;
   iconBgColor?: string;
+  periodType?: string;
 }
 
 export function MetricsCard({
@@ -17,9 +18,26 @@ export function MetricsCard({
   icon,
   description,
   iconBgColor = "bg-blue-100",
+  periodType = "week",
 }: MetricsCardProps) {
   const changeColor = change && change >= 0 ? "text-green-600" : "text-red-600";
   const changeSign = change && change >= 0 ? "+" : "";
+
+  // Get the correct comparison label based on period type
+  const getComparisonLabel = (period: string) => {
+    switch (period) {
+      case 'week':
+        return 'vs última semana';
+      case 'month':
+        return 'vs último mês';
+      case 'quarter':
+        return 'vs último trimestre';
+      case 'custom':
+      case 'all':
+      default:
+        return 'vs período anterior';
+    }
+  };
 
   return (
     <Card className="border border-gray-200">
@@ -32,7 +50,7 @@ export function MetricsCard({
             <div className="text-2xl font-bold text-gray-900">{value}</div>
             {change !== undefined && (
               <div className={cn("text-xs font-medium", changeColor)}>
-                {changeSign}{change}% vs last week
+                {changeSign}{change}% {getComparisonLabel(periodType)}
               </div>
             )}
           </div>

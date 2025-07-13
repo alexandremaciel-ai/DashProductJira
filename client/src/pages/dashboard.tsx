@@ -404,6 +404,7 @@ export default function DashboardPage() {
                   icon={<CheckCircle className="text-blue-600" size={20} />}
                   description={`Criadas ${getPeriodDescription(filters.timePeriod)}`}
                   iconBgColor="bg-blue-100"
+                  periodType={filters.timePeriod}
                 />
                 <MetricsCard
                   title="A Fazer"
@@ -412,6 +413,7 @@ export default function DashboardPage() {
                   icon={<Clock className="text-gray-600" size={20} />}
                   description={`Criadas ${getPeriodDescription(filters.timePeriod)} - pendentes`}
                   iconBgColor="bg-gray-100"
+                  periodType={filters.timePeriod}
                 />
                 <MetricsCard
                   title="Em Progresso"
@@ -420,6 +422,7 @@ export default function DashboardPage() {
                   icon={<Rocket className="text-yellow-600" size={20} />}
                   description={`Criadas ${getPeriodDescription(filters.timePeriod)} - em andamento`}
                   iconBgColor="bg-yellow-100"
+                  periodType={filters.timePeriod}
                 />
                 <MetricsCard
                   title="Concluídas"
@@ -428,6 +431,7 @@ export default function DashboardPage() {
                   icon={<CheckCircle className="text-green-600" size={20} />}
                   description={`Criadas ${getPeriodDescription(filters.timePeriod)} - finalizadas`}
                   iconBgColor="bg-green-100"
+                  periodType={filters.timePeriod}
                 />
               </div>
 
