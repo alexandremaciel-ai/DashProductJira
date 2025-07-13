@@ -10,6 +10,7 @@ interface SidebarProps {
   onFiltersChange: (filters: DashboardFilters) => void;
   sprints: JiraSprint[];
   issues: JiraIssue[];
+  allIssues?: JiraIssue[];
   credentials: JiraCredentials;
   projectKey: string;
   quickStats: {
@@ -19,7 +20,7 @@ interface SidebarProps {
   };
 }
 
-export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials, projectKey, quickStats }: SidebarProps) {
+export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, credentials, projectKey, quickStats }: SidebarProps) {
   const timePeriods = [
     { value: "week", label: "This Week" },
     { value: "month", label: "This Month" },
@@ -37,35 +38,27 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, credentials
       ? Array.from(new Set(issues.map(issue => issue.fields.issuetype.name)))
       : ["Story", "Bug", "Task", "Epic"]); // fallback default types
 
-  // Get all assignees from ALL issues (not just filtered ones) to prevent members from disappearing
-  // This uses the original issues data before filtering to maintain the full team list
-  const { data: allIssuesData } = useJiraIssues(credentials, projectKey, { 
-    timePeriod: "custom", 
-    sprint: undefined, 
-    assignee: undefined, 
-    issueTypes: [] 
-  });
-  
-  const allIssues = allIssuesData?.issues || [];
-  
-  // Get actual team members from ALL issues assignees (to keep full list available)
-  const assigneesFromAllIssues = Array.from(
-    new Map(
-      allIssues
-        .filter(issue => issue.fields.assignee) // Only issues with assignees
-        .map(issue => [
-          issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName,
-          {
-            accountId: issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName,
-            displayName: issue.fields.assignee!.displayName,
-            emailAddress: issue.fields.assignee!.emailAddress || "",
-          }
-        ])
-    ).values()
-  );
-
-  // Use assignees from all issues to keep the full team list available
-  const teamMembers = assigneesFromAllIssues;
+  // Use project members from API to maintain complete list regardless of filters
+  const teamMembers = projectMembers && projectMembers.length > 0 
+    ? projectMembers.map(member => ({
+        accountId: member.accountId,
+        displayName: member.displayName,
+        emailAddress: member.emailAddress || member.accountId,
+      }))
+    : Array.from(
+        new Map(
+          (allIssues || issues)
+            .filter(issue => issue.fields.assignee) // Only issues with assignees
+            .map(issue => [
+              issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName,
+              {
+                accountId: issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName,
+                displayName: issue.fields.assignee!.displayName,
+                emailAddress: issue.fields.assignee!.emailAddress || "",
+              }
+            ])
+        ).values()
+      );
 
   const handleTimePeriodChange = (period: DashboardFilters["timePeriod"]) => {
     onFiltersChange({ ...filters, timePeriod: period });

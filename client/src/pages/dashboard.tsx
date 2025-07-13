@@ -69,6 +69,13 @@ export default function DashboardPage() {
   );
   const { data: sprints } = useJiraSprints(credentials, selectedProject?.key || null);
   const { data: projectMembers } = useProjectMembers(credentials, selectedProject?.key || null);
+  
+  // Get all issues without filters to build complete team list
+  const { data: allIssuesData } = useJiraIssues(
+    credentials, 
+    selectedProject?.key || null, 
+    { timePeriod: "custom", sprint: undefined, assignee: undefined, issueTypes: [] }
+  );
 
   // Calculate metrics
   const issues = issuesData?.issues || [];
@@ -189,17 +196,9 @@ export default function DashboardPage() {
     handleExportPDF();
   };
 
-  // Quick stats - use assignees from all issues (not filtered) to show total team count
-  const { data: allIssuesData } = useJiraIssues(credentials, selectedProject?.key || null, { 
-    timePeriod: "custom", 
-    sprint: undefined, 
-    assignee: undefined, 
-    issueTypes: [] 
-  });
-  
-  const allIssues = allIssuesData?.issues || [];
+  // Quick stats - use assignees from current issues
   const assigneesCount = new Set(
-    allIssues
+    issues
       .filter(issue => issue.fields.assignee)
       .map(issue => issue.fields.assignee!.emailAddress || issue.fields.assignee!.displayName)
   ).size;
