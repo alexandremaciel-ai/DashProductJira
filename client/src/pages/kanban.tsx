@@ -10,7 +10,7 @@ import { KanbanBoard } from "@/components/kanban-board";
 import { CompletionCharts } from "@/components/completion-charts";
 
 import { useJiraAuth } from "@/hooks/use-jira-auth";
-import { useJiraIssues } from "@/hooks/use-jira-data";
+import { useJiraIssues, useJiraSprints, useProjectMembers } from "@/hooks/use-jira-data";
 
 import type { JiraProject, DashboardFilters } from "@/types/jira";
 
@@ -20,13 +20,15 @@ export default function KanbanPage() {
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(null);
   const [aiEnabled, setAIEnabled] = useState(false);
 
-  // Filtros para carregar todas as issues do projeto sem restrições de tempo
-  const filters: DashboardFilters = {
-    timePeriod: "custom", // Usar custom para não aplicar filtros de data
+  // Usar os mesmos filtros que o dashboard - vamos criar um estado compartilhado
+  const [filters, setFilters] = useState<DashboardFilters>({
+    timePeriod: "week", // Usar week para consistência com dashboard
     sprint: undefined,
     assignee: undefined,
     issueTypes: [],
-  };
+    customStartDate: undefined,
+    customEndDate: undefined,
+  });
 
   // Load stored data on mount
   useEffect(() => {
@@ -50,12 +52,16 @@ export default function KanbanPage() {
     }
   }, [credentials, loadStoredCredentials, setLocation]);
 
-  // Fetch issues data
+  // Fetch issues data with current filters
   const { data: issuesData, isLoading: issuesLoading } = useJiraIssues(
     credentials, 
     selectedProject?.key || null, 
     filters
   );
+  
+  // Fetch sprints and project members
+  const { data: sprints } = useJiraSprints(credentials, selectedProject?.key || null);
+  const { data: projectMembers } = useProjectMembers(credentials, selectedProject?.key || null);
 
   const issues = issuesData?.issues || [];
 
@@ -183,31 +189,53 @@ export default function KanbanPage() {
               </Card>
             </div>
 
-            {/* Tabs for Kanban and Charts */}
-            <Tabs defaultValue="kanban" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="kanban" className="flex items-center space-x-2">
-                  <Columns3 size={16} />
-                  <span>Quadro Kanban</span>
-                </TabsTrigger>
-                <TabsTrigger value="charts" className="flex items-center space-x-2">
-                  <BarChart3 size={16} />
-                  <span>Gráficos de Conclusão</span>
-                </TabsTrigger>
-              </TabsList>
+            {/* Sidebar and Content Layout */}
+            <div className="flex gap-6">
+              {/* Sidebar */}
+              <Sidebar
+                filters={filters}
+                onFiltersChange={setFilters}
+                sprints={sprints || []}
+                issues={issues}
+                allIssues={issues}
+                credentials={credentials!}
+                projectKey={selectedProject.key}
+                quickStats={{
+                  activeIssues: stats.inProgress,
+                  teamMembers: Array.from(new Set(issues.filter(i => i.fields.assignee).map(i => i.fields.assignee!.displayName))).length,
+                  avgCycleTime: 0
+                }}
+              />
 
-              <TabsContent value="kanban">
-                <KanbanBoard 
-                  issues={issues} 
-                  credentials={credentials!} 
-                  projectKey={selectedProject.key} 
-                />
-              </TabsContent>
+              {/* Main Content */}
+              <div className="flex-1">
+                {/* Tabs for Kanban and Charts */}
+                <Tabs defaultValue="kanban" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2 mb-6">
+                    <TabsTrigger value="kanban" className="flex items-center space-x-2">
+                      <Columns3 size={16} />
+                      <span>Quadro Kanban</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="charts" className="flex items-center space-x-2">
+                      <BarChart3 size={16} />
+                      <span>Gráficos de Conclusão</span>
+                    </TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="charts">
-                <CompletionCharts issues={issues} />
-              </TabsContent>
-            </Tabs>
+                  <TabsContent value="kanban">
+                    <KanbanBoard 
+                      issues={issues} 
+                      credentials={credentials!} 
+                      projectKey={selectedProject.key} 
+                    />
+                  </TabsContent>
+
+                  <TabsContent value="charts">
+                    <CompletionCharts issues={issues} />
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </div>
           </>
         )}
       </div>

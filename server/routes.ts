@@ -76,15 +76,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { jiraUrl, username, apiToken, projectKey, filters } = req.body;
       
-      // Start with a broader JQL query to get all issues
+      // Build JQL query
       let jql = `project = "${projectKey}"`;
       
-      // For initial load, don't apply date filters to get all issues
-      if (filters?.timePeriod && filters.timePeriod !== "custom") {
-        const { timePeriod } = filters;
+      // Add time period filter
+      if (filters?.timePeriod) {
         let dateFilter = "";
-        
-        switch (timePeriod) {
+        switch (filters.timePeriod) {
           case "week":
             dateFilter = " AND updated >= -1w";
             break;
@@ -93,6 +91,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
           case "quarter":
             dateFilter = " AND updated >= -3M";
+            break;
+          case "custom":
+            // Handle custom date range
+            if (filters.customStartDate && filters.customEndDate) {
+              dateFilter = ` AND updated >= "${filters.customStartDate}" AND updated <= "${filters.customEndDate}"`;
+            } else if (filters.customStartDate) {
+              dateFilter = ` AND updated >= "${filters.customStartDate}"`;
+            } else if (filters.customEndDate) {
+              dateFilter = ` AND updated <= "${filters.customEndDate}"`;
+            }
             break;
         }
         jql += dateFilter;

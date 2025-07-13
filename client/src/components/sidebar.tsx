@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
+import { CustomDatePicker } from "@/components/custom-date-picker";
 import type { DashboardFilters, JiraSprint, JiraIssue, JiraCredentials } from "@/types/jira";
 import { useJiraStatusCategories, useProjectMembers } from "@/hooks/use-jira-data";
 
@@ -61,6 +62,24 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
     onFiltersChange({ ...filters, timePeriod: period });
   };
 
+  const handleCustomDateChange = (startDate?: string, endDate?: string) => {
+    onFiltersChange({ 
+      ...filters, 
+      customStartDate: startDate,
+      customEndDate: endDate,
+      timePeriod: "custom" // Automatically set to custom when dates are selected
+    });
+  };
+
+  const handleClearCustomDates = () => {
+    onFiltersChange({ 
+      ...filters, 
+      customStartDate: undefined,
+      customEndDate: undefined,
+      timePeriod: "week" // Reset to week when clearing custom dates
+    });
+  };
+
   const handleIssueTypeChange = (issueType: string, checked: boolean) => {
     const newIssueTypes = checked 
       ? [...filters.issueTypes, issueType]
@@ -93,6 +112,19 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
               </Button>
             ))}
           </div>
+          
+          {/* Custom Date Picker */}
+          {filters.timePeriod === "custom" && (
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-gray-600 mb-2">Período Personalizado</label>
+              <CustomDatePicker
+                startDate={filters.customStartDate}
+                endDate={filters.customEndDate}
+                onDateChange={handleCustomDateChange}
+                onClear={handleClearCustomDates}
+              />
+            </div>
+          )}
         </div>
 
         {/* Sprint Filter */}

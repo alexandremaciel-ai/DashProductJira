@@ -88,4 +88,6 @@ export interface DashboardFilters {
   sprint?: string;
   assignee?: string;
   issueTypes: string[];
+  customStartDate?: string; // ISO date string
+  customEndDate?: string; // ISO date string
 }

@@ -32,10 +32,12 @@ export default function DashboardPage() {
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(null);
   const [aiEnabled, setAIEnabled] = useState(false);
   const [filters, setFilters] = useState<DashboardFilters>({
-    timePeriod: "custom", // Usar custom para não aplicar filtros de data inicialmente
+    timePeriod: "week", // Mudar para week para consistência
     sprint: undefined,
     assignee: undefined,
     issueTypes: [],
+    customStartDate: undefined,
+    customEndDate: undefined,
   });
   const [productivityMetric, setProductivityMetric] = useState<"issues" | "storyPoints">("issues");
 
