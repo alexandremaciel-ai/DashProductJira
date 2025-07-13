@@ -9,8 +9,7 @@ import { Header } from "@/components/header";
 import { Sidebar } from "@/components/sidebar";
 import { Footer } from "@/components/footer";
 import { MetricsCard } from "@/components/metrics-card";
-import { TaskEvolutionChart } from "@/components/charts/line-chart";
-import { IssueDistributionChart } from "@/components/charts/pie-chart";
+
 import { DeveloperProductivityChart } from "@/components/charts/bar-chart";
 
 import { useJiraAuth } from "@/hooks/use-jira-auth";
@@ -87,63 +86,7 @@ export default function DashboardPage() {
   // AI Insights
   const { data: aiInsights, isLoading: aiLoading } = useAIInsights(metrics, aiEnabled);
 
-  // Chart data - dynamic task evolution based on real data
-  const taskEvolutionData = useMemo(() => {
-    if (!issues.length) return [];
-    
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - i));
-      return date;
-    });
 
-    return last7Days.map(date => {
-      const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-      const dateStr = date.toISOString().split('T')[0];
-      
-      // Count issues resolved on this day
-      const resolvedOnDay = issues.filter(issue => {
-        if (!issue.fields.resolutiondate) return false;
-        const resolvedDate = new Date(issue.fields.resolutiondate);
-        return resolvedDate.toISOString().split('T')[0] === dateStr;
-      }).length;
-
-      return {
-        name: dayName,
-        value: resolvedOnDay
-      };
-    });
-  }, [issues]);
-
-  // Issue Distribution Data - dynamic based on actual status categories
-  const issueDistributionData = useMemo(() => {
-    if (!issues.length) return [];
-    
-    // Group by status category
-    const statusCategories = new Map<string, number>();
-    
-    issues.forEach(issue => {
-      const categoryKey = issue.fields.status.statusCategory.key;
-      const categoryName = issue.fields.status.statusCategory.name;
-      
-      // Map category keys to user-friendly names
-      let displayName = categoryName;
-      if (categoryKey === "new" || categoryKey === "indeterminate") {
-        displayName = "A Fazer";
-      } else if (categoryKey === "done") {
-        displayName = "Concluído";
-      } else if (categoryKey === "progress") {
-        displayName = "Em Progresso";
-      }
-      
-      statusCategories.set(displayName, (statusCategories.get(displayName) || 0) + 1);
-    });
-    
-    return Array.from(statusCategories.entries()).map(([name, value]) => ({
-      name,
-      value
-    })).filter(item => item.value > 0); // Only show categories with issues
-  }, [issues]);
 
   // Developer Productivity Data - usar nomes completos para melhor identificação
   const developerChartData = useMemo(() => {
@@ -426,32 +369,7 @@ export default function DashboardPage() {
                 />
               </div>
 
-              {/* Charts Section */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                <Card className="border border-gray-200">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">Evolução de Tarefas</CardTitle>
-                      <div className="flex items-center space-x-2">
-                        <button className="px-3 py-1 text-xs bg-blue-600 text-white rounded-lg">Semana</button>
-                        <button className="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-lg">Mês</button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <TaskEvolutionChart data={taskEvolutionData} title="Evolução de Tarefas" />
-                  </CardContent>
-                </Card>
 
-                <Card className="border border-gray-200">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Distribuição de Issues</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <IssueDistributionChart data={issueDistributionData} />
-                  </CardContent>
-                </Card>
-              </div>
 
               {/* Developer Productivity Chart */}
               <Card className="border border-gray-200 mb-8">
