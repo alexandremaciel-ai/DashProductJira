@@ -18,6 +18,7 @@ Advanced cards: Kanban now uses same professional MetricsCard components as dash
 Professional charts: Implemented 4-tab chart system with Velocity Chart, Cycle Time Analysis, Team Performance, and Issue Type Distribution.
 Complete documentation: Created comprehensive docs folder with 9 essential documents covering all aspects of the project.
 Task description extraction: Fixed task popup to correctly extract and display Jira task descriptions from Atlassian Document Format (ADF) instead of comments.
+Task popup optimization: Removed Story Points field from task details popup due to field mapping inconsistencies across different Jira configurations.
 
 ## System Architecture
 

@@ -212,20 +212,6 @@ export default function DashboardPage() {
   };
 
   const handleTaskClick = (task: JiraIssue) => {
-    // Debug temporário para investigar Story Points
-    console.log('Task fields:', Object.keys(task.fields));
-    console.log('customfield_10016:', task.fields.customfield_10016);
-    
-    // Procurar por campos que podem ser Story Points
-    const customFields = Object.keys(task.fields).filter(key => key.startsWith('customfield_'));
-    console.log('All custom fields:', customFields);
-    customFields.forEach(field => {
-      const value = (task.fields as any)[field];
-      if (typeof value === 'number' && value < 100) { // Story points geralmente são números pequenos
-        console.log(`Possible Story Points field: ${field} = ${value}`);
-      }
-    });
-    
     setSelectedTask(task);
     setIsTaskDialogOpen(true);
   };
@@ -669,24 +655,6 @@ export default function DashboardPage() {
                     </div>
                   )}
                 </div>
-
-                {/* Story Points */}
-                {selectedTask.fields.customfield_10016 && (
-                  <div className="flex items-center gap-3">
-                    <TrendingUp className="text-blue-500" size={16} />
-                    <div>
-                      <div className="text-sm text-gray-600">Story Points</div>
-                      <div className="font-medium">
-                        {typeof selectedTask.fields.customfield_10016 === 'number' 
-                          ? selectedTask.fields.customfield_10016
-                          : typeof selectedTask.fields.customfield_10016 === 'string'
-                          ? selectedTask.fields.customfield_10016
-                          : 'Não definido'
-                        }
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* Last Updated */}
                 <div className="flex items-center gap-3">
