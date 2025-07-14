@@ -22,13 +22,16 @@ export interface JiraIssue {
     summary: string;
     description?: string;
     status: {
+      id: string;
       name: string;
       statusCategory: {
         name: string;
+        key: string;
         colorName: string;
       };
     };
     assignee?: {
+      accountId: string;
       displayName: string;
       emailAddress: string;
     };

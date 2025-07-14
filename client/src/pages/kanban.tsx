@@ -14,7 +14,7 @@ import { MetricsCard } from "@/components/metrics-card";
 import { useJiraAuth } from "@/hooks/use-jira-auth";
 import { useJiraIssues, useJiraSprints, useProjectMembers } from "@/hooks/use-jira-data";
 
-import type { JiraProject, DashboardFilters } from "@/types/jira";
+import type { JiraProject, DashboardFilters, JiraIssue } from "@/types/jira";
 
 export default function KanbanPage() {
   const [, setLocation] = useLocation();

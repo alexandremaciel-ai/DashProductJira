@@ -112,6 +112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se timePeriod for "all", não aplicamos filtro de data (mostra tudo)
 
       if (filters?.assignee && filters.assignee !== "all") {
+        // Use account ID for assignee filtering in JQL
         jql += ` AND assignee = "${filters.assignee}"`;
       }
 

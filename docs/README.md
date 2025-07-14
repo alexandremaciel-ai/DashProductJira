@@ -136,6 +136,9 @@ cp .env.example .env
 # Executar em desenvolvimento
 npm run dev
 
+# Para usuários macOS: se houver erro de porta 5000
+PORT=3000 npm run dev
+
 # Build para produção
 npm run build
 ```
@@ -257,7 +260,35 @@ npm run test:e2e
 - ✅ Manter compatibilidade com Jira API
 - ✅ Usar conventional commits
 
-## 🐛 **Issues e Suporte**
+## � **Troubleshooting**
+
+### **Problemas Comuns**
+
+#### **Erro: ENOTSUP: operation not supported on socket (macOS)**
+```bash
+# Problema: Porta 5000 ocupada pelo Control Center do macOS
+# Solução: Use uma porta diferente
+PORT=3000 npm run dev
+```
+
+#### **Erro: Port already in use**
+```bash
+# Encontrar processo usando a porta
+lsof -i :5000
+
+# Matar processo se necessário
+kill -9 <PID>
+
+# Ou usar porta diferente
+PORT=3001 npm run dev
+```
+
+#### **Erro: Cannot connect to Jira**
+- ✅ Verifique se a URL do Jira está correta
+- ✅ Confirme se o API token é válido
+- ✅ Teste a conexão em: `https://suaempresa.atlassian.net/rest/api/3/myself`
+
+## �🐛 **Issues e Suporte**
 
 ### **Reportar Bugs**
 1. Verifique se já não existe issue similar

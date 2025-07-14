@@ -23,6 +23,8 @@ import {
   useAIInsights,
   useProjectMembers 
 } from "@/hooks/use-jira-data";
+import { useAdvancedAI, useAIConfiguration } from "@/hooks/use-advanced-ai";
+import { AdvancedAIInsights } from "@/components/advanced-ai-insights";
 import { exportUtils } from "@/lib/export-utils";
 
 import type { JiraProject, DashboardFilters, JiraIssue } from "@/types/jira";
@@ -86,8 +88,16 @@ export default function DashboardPage() {
   const issues = issuesData?.issues || [];
   const metrics = useProductivityMetrics(issues);
   
-  // AI Insights
+  // AI Insights (legacy)
   const { data: aiInsights, isLoading: aiLoading } = useAIInsights(metrics, aiEnabled);
+  
+  // Advanced AI Insights
+  const { config: aiConfig, updateConfig: updateAIConfig } = useAIConfiguration();
+  const { 
+    insights: advancedInsights, 
+    isLoading: advancedAILoading, 
+    refreshInsights: refreshAdvancedInsights 
+  } = useAdvancedAI(issues, metrics, credentials, selectedProject?.key || "", aiEnabled, aiConfig);
 
   // Helper function to get tasks created in the current period
   const getTasksCreatedInPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
@@ -126,7 +136,7 @@ export default function DashboardPage() {
     });
   };
 
-  // Tarefas Concluídas - filtradas pelo período selecionado
+  // Tarefas Concluídas - filtradas pelo período selecionado e membro da equipe
   const completedTasks = useMemo(() => {
     if (!allIssuesData?.issues) return [];
     
@@ -134,10 +144,22 @@ export default function DashboardPage() {
     const currentPeriodTasks = getTasksCreatedInPeriod(allIssuesData.issues, filters);
     
     return currentPeriodTasks
-      .filter(issue => 
-        issue.fields.status.statusCategory.name === "Done" || 
-        issue.fields.status.statusCategory.key === "done"
-      )
+      .filter(issue => {
+        // Filtrar por status concluído
+        const isDone = issue.fields.status.statusCategory.name === "Done" || 
+                       issue.fields.status.statusCategory.key === "done";
+        
+        // Filtrar por membro da equipe selecionado (se aplicável)
+        const matchesAssignee = !filters.assignee || 
+                               filters.assignee === "all" || 
+                               issue.fields.assignee?.accountId === filters.assignee;
+        
+        // Filtrar por tipo de issue (se aplicável)
+        const matchesIssueType = filters.issueTypes.length === 0 || 
+                                filters.issueTypes.includes(issue.fields.issuetype.name);
+        
+        return isDone && matchesAssignee && matchesIssueType;
+      })
       .sort((a, b) => {
         // Ordenar por data de resolução (mais recente primeiro)
         const dateA = new Date(a.fields.resolutiondate || a.fields.updated);
@@ -502,39 +524,47 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
 
-              {/* AI Insights Section */}
-              {aiEnabled && (
+              {/* Advanced AI Insights Section */}
+              {aiEnabled && advancedInsights && (
+                <AdvancedAIInsights
+                  insights={advancedInsights}
+                  isLoading={advancedAILoading}
+                  onRefresh={refreshAdvancedInsights}
+                  onConfigChange={updateAIConfig}
+                />
+              )}
+
+              {/* Loading State for AI */}
+              {aiEnabled && advancedAILoading && (
                 <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 mb-8">
                   <CardContent className="p-6">
                     <div className="flex items-start space-x-4">
                       <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Loader2 className="text-white animate-spin" size={20} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Processando Análise com IA</h3>
+                        <div className="flex items-center">
+                          <Loader2 className="animate-spin mr-2" size={16} />
+                          <span>Analisando {issues.length} issues e gerando insights avançados...</span>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* AI Disabled State */}
+              {!aiEnabled && (
+                <Card className="bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 mb-8">
+                  <CardContent className="p-6">
+                    <div className="flex items-start space-x-4">
+                      <div className="w-12 h-12 bg-gray-400 rounded-lg flex items-center justify-center flex-shrink-0">
                         <Lightbulb className="text-white" size={20} />
                       </div>
                       <div className="flex-1">
                         <h3 className="text-lg font-semibold text-gray-900 mb-3">Insights com IA</h3>
-                        {aiLoading ? (
-                          <div className="flex items-center">
-                            <Loader2 className="animate-spin mr-2" size={16} />
-                            <span>Gerando insights...</span>
-                          </div>
-                        ) : aiInsights ? (
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="bg-white rounded-lg p-4 border border-gray-200">
-                              <h4 className="font-medium text-gray-900 mb-2">
-                                <Lightbulb className="inline text-yellow-500 mr-2" size={16} />
-                                Insights de Performance
-                              </h4>
-                              <p className="text-sm text-gray-600">{aiInsights.performance}</p>
-                            </div>
-                            <div className="bg-white rounded-lg p-4 border border-gray-200">
-                              <h4 className="font-medium text-gray-900 mb-2">
-                                <TrendingUp className="inline text-green-500 mr-2" size={16} />
-                                Previsões
-                              </h4>
-                              <p className="text-sm text-gray-600">{aiInsights.predictions}</p>
-                            </div>
-                          </div>
-                        ) : null}
+                        <p className="text-gray-600">Ative a análise com IA no cabeçalho para ver insights avançados sobre desempenho da equipe, previsões e recomendações.</p>
                       </div>
                     </div>
                   </CardContent>
