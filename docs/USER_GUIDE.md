@@ -213,38 +213,83 @@ Antes de usar o dashboard, você precisa de um **API Token** do Jira:
 
 ---
 
-## 📋 **Exportação e Relatórios**
+## 📋 **Sistema de Exportação Avançada**
 
-### **Exportar para PDF**
-1. **Clique em "Exportar PDF"** no footer
-2. **Aguarde a geração** do relatório
-3. **Download automático** do arquivo
-4. **Conteúdo:** Métricas + gráficos + insights
+### **🚀 Visão Geral**
+O dashboard oferece **três tipos de exportação profissional** com dados completos e análises detalhadas, perfeitas para reuniões executivas e relatórios de performance.
 
-### **Exportar para CSV**
+---
+
+### **📊 Exportar CSV Profissional**
+
+#### **Como Usar**
 1. **Clique em "Exportar CSV"** no footer
-2. **Download dos dados brutos**
-3. **Use em:** Excel, Google Sheets, análises customizadas
+2. **Aguarde o processamento** (spinner visível)
+3. **Download automático** do arquivo com UTF-8
+4. **Abra em:** Excel, Google Sheets, Power BI
 
-### **Gerar Relatório**
-1. **Clique em "Gerar Relatório"**
-2. **Relatório executivo** com insights
-3. **Inclui:** Resumo, tendências, recomendações
+#### **Conteúdo Completo**
+- 📈 **Informações Gerais:** Projeto, data, período analisado
+- 📊 **Métricas Principais:** Velocity, cycle time, taxa de bugs, comparações
+- 👥 **Produtividade da Equipe:** Estatísticas individuais detalhadas
+- 📋 **Tarefas Concluídas:** Lista completa com tempo de resolução
+- 📈 **Análise de Tipos:** Distribuição por Story/Bug/Task com percentuais
+- 📉 **Burndown Data:** Dados dos últimos 30 dias para gráficos
+- 🤖 **Insights da IA:** Análises e recomendações (quando disponível)
 
-### **Conteúdo dos Relatórios**
+---
 
-#### **PDF Report**
-- ✅ Métricas principais
-- ✅ Gráficos de velocity
-- ✅ Análise de cycle time
-- ✅ Performance da equipe
-- ✅ Insights e recomendações
+### **📄 Exportar PDF Executivo**
 
-#### **CSV Export**
-- ✅ Lista completa de issues
-- ✅ Todas as propriedades
-- ✅ Dados calculados (cycle time, etc.)
-- ✅ Compatível com Excel
+#### **Como Usar**
+1. **Clique em "Exportar PDF"** no footer
+2. **Aguarde a geração** (pode levar alguns segundos)
+3. **Download automático** do relatório profissional
+4. **Use em:** Apresentações, reuniões, arquivamento
+
+#### **Layout Profissional**
+- 🎨 **Design Clean:** Cabeçalho, rodapé, numeração de páginas
+- 📊 **Tabelas Organizadas:** Métricas e estatísticas bem formatadas
+- 🌈 **Cores Visuais:** Verde/vermelho para mudanças positivas/negativas
+- 📑 **Paginação Automática:** Múltiplas páginas para projetos grandes
+
+---
+
+### **🎯 Gerar Relatório Completo**
+
+#### **Como Usar**
+1. **Clique em "Gerar Relatório"** no footer
+2. **Veja notificação** de progresso em tempo real
+3. **Aguarde processamento** (CSV + PDF simultaneamente)
+4. **Download duplo:** Ambos os arquivos são baixados
+5. **Notificação de sucesso** confirma a conclusão
+
+#### **Experiência Visual**
+- 🔄 **Em Progresso:** Spinner animado + texto informativo
+- ✅ **Sucesso:** Ícone verde + confirmação de download
+- ❌ **Erro:** Ícone vermelho + sugestão para tentar novamente
+
+---
+
+### **📊 Dados Incluídos nos Relatórios**
+
+#### **Métricas de Performance**
+- ✅ Tarefas entregues com % de mudança
+- ✅ Velocidade da equipe e tendências
+- ✅ Cycle time médio e otimização
+- ✅ Taxa de bugs e qualidade
+
+#### **Análise da Equipe**
+- ✅ Estatísticas individuais completas
+- ✅ Ranking de performance com medalhas
+- ✅ Produtividade e distribuição de trabalho
+- ✅ Tempo de ciclo individual vs equipe
+
+#### **Dados Históricos**
+- ✅ Burndown chart dos últimos 30 dias
+- ✅ Tendências e padrões identificados
+- ✅ Comparações período atual vs anterior
+- ✅ Análise de tipos de issue (Story/Bug/Task)
 
 ---
 

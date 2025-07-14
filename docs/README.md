@@ -12,7 +12,7 @@ O Jira Productivity Dashboard é uma ferramenta profissional que transforma dado
 - 📊 **4 Tipos de Gráficos** avançados (Conclusões, Velocity, Cycle Time, Performance da Equipe)
 - 📋 **Kanban Board** visual com filtros sincronizados
 - 🔍 **Sistema de Filtros** robusto (período, sprint, assignee, tipo)
-- 📄 **Exportação** para PDF e CSV
+- 📄 **Exportação Avançada** (CSV profissional, PDF executivo, Relatórios completos)
 - 🤖 **Insights com IA** (análise automatizada)
 - 🌍 **Interface Brasileira** (totalmente localizada)
 
@@ -335,7 +335,7 @@ PORT=3001 npm run dev
 - ✅ Sistema de gráficos (4 abas)
 - ✅ Kanban board integrado
 - ✅ Filtros avançados
-- ✅ Exportação PDF/CSV
+- ✅ **Exportação Avançada** (CSV profissional, PDF executivo, Relatórios completos)\n- ✅ **Sistema de Notificações** visuais em tempo real\n- ✅ **Análise de Produtividade** individual e por equipe\n- ✅ **Burndown Charts** e métricas históricas
 - ✅ Interface em português
 - ✅ Insights com IA (básico)
 

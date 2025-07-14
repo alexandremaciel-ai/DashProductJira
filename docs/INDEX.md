@@ -80,7 +80,7 @@ Bem-vindo à documentação completa do Jira Productivity Dashboard. Esta seçã
 | Documento | Público | Propósito | Atualização |
 |-----------|---------|-----------|-------------|
 | [README.md](./README.md) | Todos | Visão geral e quick start | Contínua |
-| [USER_GUIDE.md](./USER_GUIDE.md) | Usuários finais | Tutorial completo de uso | Mensal |
+| [USER_GUIDE.md](./USER_GUIDE.md) | Usuários finais | Tutorial completo de uso | Mensal |\n| [EXPORT_FEATURES.md](./EXPORT_FEATURES.md) | Usuários/Gestores | Sistema de exportação avançada | Por release |
 | [PRD.md](./PRD.md) | Product/Business | Requisitos e objetivos | Trimestral |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Desenvolvedores | Design técnico | Por release |
 | [TECH_STACK.md](./TECH_STACK.md) | Desenvolvedores | Tecnologias usadas | Por release |
@@ -120,7 +120,7 @@ Bem-vindo à documentação completa do Jira Productivity Dashboard. Esta seçã
 
 ### **Completude**
 - ✅ **README Principal** - 100% completo
-- ✅ **Guia do Usuário** - 100% completo
+- ✅ **Guia do Usuário** - 100% completo\n- ✅ **Funcionalidades de Exportação** - 100% completo
 - ✅ **PRD** - 100% completo
 - ✅ **Arquitetura** - 100% completo
 - ✅ **Stack Tecnológico** - 100% completo
