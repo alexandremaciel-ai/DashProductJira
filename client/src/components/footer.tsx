@@ -1,14 +1,48 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { FileText, FileSpreadsheet, ChartLine } from "lucide-react";
+import { FileText, FileSpreadsheet, ChartLine, Loader2 } from "lucide-react";
 
 interface FooterProps {
   lastUpdate: string;
   onExportCSV: () => void;
-  onExportPDF: () => void;
-  onGenerateReport: () => void;
+  onExportPDF: () => Promise<void>;
+  onGenerateReport: () => Promise<void>;
 }
 
 export function Footer({ lastUpdate, onExportCSV, onExportPDF, onGenerateReport }: FooterProps) {
+  const [loadingStates, setLoadingStates] = useState({
+    csv: false,
+    pdf: false,
+    report: false
+  });
+
+  const handleExportCSV = async () => {
+    setLoadingStates(prev => ({ ...prev, csv: true }));
+    try {
+      await onExportCSV();
+    } finally {
+      setLoadingStates(prev => ({ ...prev, csv: false }));
+    }
+  };
+
+  const handleExportPDF = async () => {
+    setLoadingStates(prev => ({ ...prev, pdf: true }));
+    try {
+      await onExportPDF();
+    } finally {
+      setLoadingStates(prev => ({ ...prev, pdf: false }));
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    setLoadingStates(prev => ({ ...prev, report: true }));
+    try {
+      await onGenerateReport();
+    } finally {
+      setLoadingStates(prev => ({ ...prev, report: false }));
+    }
+  };
+
   return (
     <footer className="bg-white border-t border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -22,28 +56,43 @@ export function Footer({ lastUpdate, onExportCSV, onExportPDF, onGenerateReport 
           <Button 
             variant="outline"
             size="sm"
-            onClick={onExportCSV}
-            className="text-gray-600 hover:text-gray-700"
+            onClick={handleExportCSV}
+            disabled={loadingStates.csv}
+            className="text-gray-600 hover:text-gray-700 disabled:opacity-50"
           >
-            <FileSpreadsheet className="mr-2" size={14} />
-            Exportar CSV
+            {loadingStates.csv ? (
+              <Loader2 className="mr-2 animate-spin" size={14} />
+            ) : (
+              <FileSpreadsheet className="mr-2" size={14} />
+            )}
+            {loadingStates.csv ? 'Exportando...' : 'Exportar CSV'}
           </Button>
           <Button 
             variant="outline"
             size="sm"
-            onClick={onExportPDF}
-            className="text-gray-600 hover:text-gray-700"
+            onClick={handleExportPDF}
+            disabled={loadingStates.pdf}
+            className="text-gray-600 hover:text-gray-700 disabled:opacity-50"
           >
-            <FileText className="mr-2" size={14} />
-            Exportar PDF
+            {loadingStates.pdf ? (
+              <Loader2 className="mr-2 animate-spin" size={14} />
+            ) : (
+              <FileText className="mr-2" size={14} />
+            )}
+            {loadingStates.pdf ? 'Gerando PDF...' : 'Exportar PDF'}
           </Button>
           <Button 
             size="sm"
-            onClick={onGenerateReport}
-            className="bg-blue-600 text-white hover:bg-blue-700"
+            onClick={handleGenerateReport}
+            disabled={loadingStates.report}
+            className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
           >
-            <ChartLine className="mr-2" size={14} />
-            Gerar Relatório
+            {loadingStates.report ? (
+              <Loader2 className="mr-2 animate-spin" size={14} />
+            ) : (
+              <ChartLine className="mr-2" size={14} />
+            )}
+            {loadingStates.report ? 'Gerando...' : 'Gerar Relatório'}
           </Button>
         </div>
       </div>

@@ -240,20 +240,44 @@ export default function DashboardPage() {
 
   const handleExportCSV = () => {
     if (selectedProject) {
-      exportUtils.exportToCSV(metrics, [], selectedProject.name);
+      const exportData = {
+        metrics,
+        issues,
+        completedTasks,
+        projectName: selectedProject.name,
+        filters,
+        aiInsights: advancedInsights
+      };
+      exportUtils.exportToCSV(exportData);
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (selectedProject) {
-      exportUtils.exportToPDF(metrics, [], selectedProject.name);
+      const exportData = {
+        metrics,
+        issues,
+        completedTasks,
+        projectName: selectedProject.name,
+        filters,
+        aiInsights: advancedInsights
+      };
+      await exportUtils.exportToPDF(exportData);
     }
   };
 
-  const handleGenerateReport = () => {
-    // Combined export - both CSV and PDF
-    handleExportCSV();
-    handleExportPDF();
+  const handleGenerateReport = async () => {
+    if (selectedProject) {
+      const exportData = {
+        metrics,
+        issues,
+        completedTasks,
+        projectName: selectedProject.name,
+        filters,
+        aiInsights: advancedInsights
+      };
+      await exportUtils.generateReport(exportData);
+    }
   };
 
   // Helper function to get period description
