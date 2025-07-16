@@ -88,7 +88,7 @@ export interface AIInsights {
 }
 
 export interface DashboardFilters {
-  timePeriod: "week" | "month" | "quarter" | "custom" | "all";
+  timePeriod: "week" | "month" | "quarter" | "custom";
   sprint?: string;
   assignee?: string;
   issueTypes: string[];

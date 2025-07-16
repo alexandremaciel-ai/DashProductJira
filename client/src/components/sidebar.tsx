@@ -26,7 +26,6 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
     { value: "week", label: "Esta Semana" },
     { value: "month", label: "Este Mês" },
     { value: "quarter", label: "Trimestre" },
-    { value: "all", label: "Todo Período" },
     { value: "custom", label: "Personalizado" },
   ] as const;
 

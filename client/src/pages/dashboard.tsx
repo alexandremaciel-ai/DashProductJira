@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Rocket, Clock, Bug, Lightbulb, TrendingUp, Loader2, Columns3, Calendar, User, FileText, Tag } from "lucide-react";
+import { CheckCircle, Rocket, Clock, Bug, Lightbulb, TrendingUp, Loader2, Columns3, Calendar, User, FileText, Tag, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Header } from "@/components/header";
 import { Sidebar } from "@/components/sidebar";
@@ -36,14 +36,30 @@ export default function DashboardPage() {
   const [aiEnabled, setAIEnabled] = useState(false);
   const [selectedTask, setSelectedTask] = useState<JiraIssue | null>(null);
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
-  const [filters, setFilters] = useState<DashboardFilters>({
-    timePeriod: "all", // Padrão agora é "Todo Período"
-    sprint: undefined,
-    assignee: undefined,
-    issueTypes: [],
-    customStartDate: undefined,
-    customEndDate: undefined,
-  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 10;
+  // Helper function to load filters from sessionStorage
+  const loadFiltersFromStorage = (): DashboardFilters => {
+    try {
+      const storedFilters = sessionStorage.getItem('dashboardFilters');
+      if (storedFilters) {
+        return JSON.parse(storedFilters);
+      }
+    } catch (error) {
+      console.warn('Failed to load filters from sessionStorage:', error);
+    }
+    // Default filters if none stored
+    return {
+      timePeriod: "week", // Padrão agora é "Esta Semana"
+      sprint: undefined,
+      assignee: undefined,
+      issueTypes: [],
+      customStartDate: undefined,
+      customEndDate: undefined,
+    };
+  };
+
+  const [filters, setFilters] = useState<DashboardFilters>(loadFiltersFromStorage());
 
 
   // Load stored data on mount
@@ -121,9 +137,8 @@ export default function DashboardPage() {
           return allIssues; // If no custom start date, return all
         }
         break;
-      case 'all':
       default:
-        return allIssues; // Return all tasks for "Todo Período"
+        return allIssues; // Return all tasks for unknown period
     }
 
     return allIssues.filter(issue => {
@@ -167,6 +182,40 @@ export default function DashboardPage() {
         return dateB.getTime() - dateA.getTime();
       });
   }, [allIssuesData?.issues, filters]);
+
+  // Pagination logic for completed tasks
+  const totalPages = Math.ceil(completedTasks.length / tasksPerPage);
+  const startIndex = (currentPage - 1) * tasksPerPage;
+  const endIndex = startIndex + tasksPerPage;
+  const paginatedCompletedTasks = completedTasks.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
+
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  };
+
+  const handlePageClick = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Save filters to sessionStorage whenever they change
+  const handleFiltersChange = (newFilters: DashboardFilters) => {
+    setFilters(newFilters);
+    try {
+      sessionStorage.setItem('dashboardFilters', JSON.stringify(newFilters));
+    } catch (error) {
+      console.warn('Failed to save filters to sessionStorage:', error);
+    }
+  };
 
   // Event handlers
   const handleSwitchProject = () => setLocation("/projects");
@@ -287,7 +336,6 @@ export default function DashboardPage() {
       case 'month': return 'este mês';
       case 'quarter': return 'este trimestre';
       case 'custom': return 'no período personalizado';
-      case 'all':
       default: return 'em todo período';
     }
   };
@@ -312,9 +360,8 @@ export default function DashboardPage() {
         endDate = new Date(now.getTime() - 84 * 24 * 60 * 60 * 1000); // 12 weeks ago
         break;
       case 'custom':
-      case 'all':
       default:
-        return []; // No comparison for custom or all periods
+        return []; // No comparison for custom periods
     }
 
     return allIssues.filter(issue => {
@@ -413,7 +460,7 @@ export default function DashboardPage() {
       <div className="flex">
         <Sidebar
           filters={filters}
-          onFiltersChange={setFilters}
+          onFiltersChange={handleFiltersChange}
           sprints={sprints || []}
           issues={issues}
           credentials={credentials!}
@@ -491,54 +538,107 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   {completedTasks.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <table className="w-full border-collapse">
-                        <thead>
-                          <tr className="border-b border-gray-200">
-                            <th className="text-left p-3 font-medium text-gray-900">Task</th>
-                            <th className="text-left p-3 font-medium text-gray-900">Responsável</th>
-                            <th className="text-left p-3 font-medium text-gray-900">Data de Criação</th>
-                            <th className="text-left p-3 font-medium text-gray-900">Data de Resolução</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {completedTasks.map((task) => (
-                            <tr 
-                              key={task.id} 
-                              className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
-                              onClick={() => handleTaskClick(task)}
-                            >
-                              <td className="p-3">
-                                <div>
-                                  <div className="font-medium text-blue-600">{task.key}</div>
-                                  <div className="text-sm text-gray-600 truncate max-w-md" title={task.fields.summary}>
-                                    {task.fields.summary}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="p-3">
-                                <span className="text-gray-900">
-                                  {task.fields.assignee?.displayName || 'Não atribuído'}
-                                </span>
-                              </td>
-                              <td className="p-3">
-                                <span className="text-gray-600">
-                                  {new Date(task.fields.created).toLocaleDateString('pt-BR')}
-                                </span>
-                              </td>
-                              <td className="p-3">
-                                <span className="text-green-600">
-                                  {task.fields.resolutiondate 
-                                    ? new Date(task.fields.resolutiondate).toLocaleDateString('pt-BR')
-                                    : new Date(task.fields.updated).toLocaleDateString('pt-BR')
-                                  }
-                                </span>
-                              </td>
+                    <>
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse">
+                          <thead>
+                            <tr className="border-b border-gray-200">
+                              <th className="text-left p-3 font-medium text-gray-900">Task</th>
+                              <th className="text-left p-3 font-medium text-gray-900">Responsável</th>
+                              <th className="text-left p-3 font-medium text-gray-900">Data de Criação</th>
+                              <th className="text-left p-3 font-medium text-gray-900">Data de Resolução</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
+                          </thead>
+                          <tbody>
+                            {paginatedCompletedTasks.map((task) => (
+                              <tr 
+                                key={task.id} 
+                                className="border-b border-gray-100 hover:bg-blue-50 cursor-pointer transition-colors"
+                                onClick={() => handleTaskClick(task)}
+                              >
+                                <td className="p-3">
+                                  <div>
+                                    <div className="font-medium text-blue-600">{task.key}</div>
+                                    <div className="text-sm text-gray-600 truncate max-w-md" title={task.fields.summary}>
+                                      {task.fields.summary}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="p-3">
+                                  <span className="text-gray-900">
+                                    {task.fields.assignee?.displayName || 'Não atribuído'}
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  <span className="text-gray-600">
+                                    {new Date(task.fields.created).toLocaleDateString('pt-BR')}
+                                  </span>
+                                </td>
+                                <td className="p-3">
+                                  <span className="text-green-600">
+                                    {task.fields.resolutiondate 
+                                      ? new Date(task.fields.resolutiondate).toLocaleDateString('pt-BR')
+                                      : new Date(task.fields.updated).toLocaleDateString('pt-BR')
+                                    }
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      {/* Pagination */}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                          <div className="flex items-center space-x-2 text-sm text-gray-600">
+                            <span>Mostrando {startIndex + 1} a {Math.min(endIndex, completedTasks.length)} de {completedTasks.length} tarefas</span>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handlePreviousPage}
+                              disabled={currentPage === 1}
+                              className="flex items-center space-x-1"
+                            >
+                              <ChevronLeft size={16} />
+                              <span>Anterior</span>
+                            </Button>
+                            
+                            <div className="flex space-x-1">
+                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                                <Button
+                                  key={page}
+                                  variant={currentPage === page ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => handlePageClick(page)}
+                                  className={`min-w-[40px] ${
+                                    currentPage === page 
+                                      ? "bg-blue-600 text-white hover:bg-blue-700" 
+                                      : "text-gray-600 hover:text-gray-700"
+                                  }`}
+                                >
+                                  {page}
+                                </Button>
+                              ))}
+                            </div>
+                            
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleNextPage}
+                              disabled={currentPage === totalPages}
+                              className="flex items-center space-x-1"
+                            >
+                              <span>Próxima</span>
+                              <ChevronRight size={16} />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   ) : (
                     <div className="text-center py-8 text-gray-500">
                       <CheckCircle className="mx-auto mb-4 text-gray-300" size={48} />

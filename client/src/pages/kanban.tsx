@@ -22,15 +22,29 @@ export default function KanbanPage() {
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(null);
   const [aiEnabled, setAIEnabled] = useState(false);
 
-  // Usar os mesmos filtros que o dashboard - vamos criar um estado compartilhado
-  const [filters, setFilters] = useState<DashboardFilters>({
-    timePeriod: "all", // Padrão agora é "Todo Período"
-    sprint: undefined,
-    assignee: undefined,
-    issueTypes: [],
-    customStartDate: undefined,
-    customEndDate: undefined,
-  });
+  // Helper function to load filters from sessionStorage (same as dashboard)
+  const loadFiltersFromStorage = (): DashboardFilters => {
+    try {
+      const storedFilters = sessionStorage.getItem('dashboardFilters');
+      if (storedFilters) {
+        return JSON.parse(storedFilters);
+      }
+    } catch (error) {
+      console.warn('Failed to load filters from sessionStorage:', error);
+    }
+    // Default filters if none stored
+    return {
+      timePeriod: "week", // Padrão agora é "Esta Semana"
+      sprint: undefined,
+      assignee: undefined,
+      issueTypes: [],
+      customStartDate: undefined,
+      customEndDate: undefined,
+    };
+  };
+
+  // Usar os mesmos filtros que o dashboard - agora carregando do sessionStorage
+  const [filters, setFilters] = useState<DashboardFilters>(loadFiltersFromStorage());
 
   // Load stored data on mount
   useEffect(() => {
@@ -66,6 +80,16 @@ export default function KanbanPage() {
   const { data: projectMembers } = useProjectMembers(credentials, selectedProject?.key || null);
 
   const issues = issuesData?.issues || [];
+
+  // Save filters to sessionStorage whenever they change (same as dashboard)
+  const handleFiltersChange = (newFilters: DashboardFilters) => {
+    setFilters(newFilters);
+    try {
+      sessionStorage.setItem('dashboardFilters', JSON.stringify(newFilters));
+    } catch (error) {
+      console.warn('Failed to save filters to sessionStorage:', error);
+    }
+  };
 
   // Event handlers
   const handleSwitchProject = () => setLocation("/projects");
@@ -127,9 +151,8 @@ export default function KanbanPage() {
           return allIssues; // If no custom start date, return all
         }
         break;
-      case 'all':
       default:
-        return allIssues; // Return all tasks for "Todo Período"
+        return allIssues; // Return all tasks for unknown period
     }
 
     return allIssues.filter(issue => {
@@ -208,9 +231,8 @@ export default function KanbanPage() {
         endDate = new Date(now.getTime() - 84 * 24 * 60 * 60 * 1000); // 12 weeks ago
         break;
       case 'custom':
-      case 'all':
       default:
-        return []; // No comparison for custom or all periods
+        return []; // No comparison for custom periods
     }
 
     return allIssues.filter(issue => {
@@ -282,7 +304,6 @@ export default function KanbanPage() {
       case 'month': return 'este mês';
       case 'quarter': return 'este trimestre';
       case 'custom': return 'no período personalizado';
-      case 'all':
       default: return 'em todo período';
     }
   };
@@ -383,7 +404,7 @@ export default function KanbanPage() {
               {/* Sidebar */}
               <Sidebar
                 filters={filters}
-                onFiltersChange={setFilters}
+                onFiltersChange={handleFiltersChange}
                 sprints={sprints || []}
                 issues={tasksCreatedInPeriod}
                 allIssues={issues}
