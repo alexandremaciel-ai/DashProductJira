@@ -115,8 +115,8 @@ export default function DashboardPage() {
     refreshInsights: refreshAdvancedInsights 
   } = useAdvancedAI(issues, metrics, credentials, selectedProject?.key || "", aiEnabled, aiConfig);
 
-  // Helper function to get tasks created in the current period
-  const getTasksCreatedInPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
+  // Helper function to get tasks completed in the current period
+  const getTasksCompletedInPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
     const now = new Date();
     let startDate: Date;
 
@@ -134,36 +134,37 @@ export default function DashboardPage() {
         if (filters.customStartDate) {
           startDate = new Date(filters.customStartDate);
         } else {
-          return allIssues; // If no custom start date, return all
+          return allIssues.filter(issue => issue.fields.resolutiondate); // Return all completed tasks
         }
         break;
       default:
-        return allIssues; // Return all tasks for unknown period
+        return allIssues.filter(issue => issue.fields.resolutiondate); // Return all completed tasks
     }
 
     return allIssues.filter(issue => {
-      const createdDate = new Date(issue.fields.created);
+      // Only consider tasks that have been resolved/completed
+      if (!issue.fields.resolutiondate) {
+        return false;
+      }
+      
+      const resolutionDate = new Date(issue.fields.resolutiondate);
       if (filters.timePeriod === 'custom' && filters.customEndDate) {
         const endDate = new Date(filters.customEndDate);
-        return createdDate >= startDate && createdDate <= endDate;
+        return resolutionDate >= startDate && resolutionDate <= endDate;
       }
-      return createdDate >= startDate;
+      return resolutionDate >= startDate;
     });
   };
 
-  // Tarefas Concluídas - filtradas pelo período selecionado e membro da equipe
+  // Tarefas Concluídas - filtradas pelo período selecionado (baseado na data de resolução)
   const completedTasks = useMemo(() => {
     if (!allIssuesData?.issues) return [];
     
-    // Pegar tarefas criadas no período selecionado que estão concluídas
-    const currentPeriodTasks = getTasksCreatedInPeriod(allIssuesData.issues, filters);
+    // Pegar tarefas concluídas no período selecionado
+    const currentPeriodCompletedTasks = getTasksCompletedInPeriod(allIssuesData.issues, filters);
     
-    return currentPeriodTasks
+    return currentPeriodCompletedTasks
       .filter(issue => {
-        // Filtrar por status concluído
-        const isDone = issue.fields.status.statusCategory.name === "Done" || 
-                       issue.fields.status.statusCategory.key === "done";
-        
         // Filtrar por membro da equipe selecionado (se aplicável)
         const matchesAssignee = !filters.assignee || 
                                filters.assignee === "all" || 
@@ -173,7 +174,7 @@ export default function DashboardPage() {
         const matchesIssueType = filters.issueTypes.length === 0 || 
                                 filters.issueTypes.includes(issue.fields.issuetype.name);
         
-        return isDone && matchesAssignee && matchesIssueType;
+        return matchesAssignee && matchesIssueType;
       })
       .sort((a, b) => {
         // Ordenar por data de resolução (mais recente primeiro)
@@ -340,8 +341,8 @@ export default function DashboardPage() {
     }
   };
 
-  // Helper function to get tasks from previous period for comparison
-  const getTasksFromPreviousPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
+  // Helper function to get tasks completed in previous period for comparison
+  const getTasksCompletedFromPreviousPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
     const now = new Date();
     let startDate: Date;
     let endDate: Date;
@@ -365,8 +366,13 @@ export default function DashboardPage() {
     }
 
     return allIssues.filter(issue => {
-      const createdDate = new Date(issue.fields.created);
-      return createdDate >= startDate && createdDate <= endDate;
+      // Only consider tasks that have been resolved/completed
+      if (!issue.fields.resolutiondate) {
+        return false;
+      }
+      
+      const resolutionDate = new Date(issue.fields.resolutiondate);
+      return resolutionDate >= startDate && resolutionDate <= endDate;
     });
   };
 
@@ -378,42 +384,30 @@ export default function DashboardPage() {
     return Math.round(((current - previous) / previous) * 100);
   };
 
-  // Get current and previous period data for comparisons
-  const currentPeriodTasks = getTasksCreatedInPeriod(issues, filters);
-  const previousPeriodTasks = getTasksFromPreviousPeriod(issues, filters);
+  // Get current and previous period data for comparisons (based on resolution date)
+  const currentPeriodCompletedTasks = getTasksCompletedInPeriod(allIssuesData?.issues || [], filters);
+  const previousPeriodCompletedTasks = getTasksCompletedFromPreviousPeriod(allIssuesData?.issues || [], filters);
 
-  // Calculate current period stats
+  // Calculate current period stats (show current status of all tasks)
   const currentStats = {
-    total: currentPeriodTasks.length,
-    todo: currentPeriodTasks.filter(i => 
+    total: issues.length, // Total de todas as tasks atuais
+    todo: issues.filter(i => 
       i.fields.status.statusCategory.name === "To Do" || 
       i.fields.status.statusCategory.key === "new"
     ).length,
-    inProgress: currentPeriodTasks.filter(i => 
+    inProgress: issues.filter(i => 
       i.fields.status.statusCategory.name === "In Progress" || 
       i.fields.status.statusCategory.key === "indeterminate"
     ).length,
-    done: currentPeriodTasks.filter(i => 
-      i.fields.status.statusCategory.name === "Done" || 
-      i.fields.status.statusCategory.key === "done"
-    ).length
+    done: currentPeriodCompletedTasks.length // Tarefas concluídas no período
   };
 
-  // Calculate previous period stats
+  // Calculate previous period stats (based on completed tasks)
   const previousStats = {
-    total: previousPeriodTasks.length,
-    todo: previousPeriodTasks.filter(i => 
-      i.fields.status.statusCategory.name === "To Do" || 
-      i.fields.status.statusCategory.key === "new"
-    ).length,
-    inProgress: previousPeriodTasks.filter(i => 
-      i.fields.status.statusCategory.name === "In Progress" || 
-      i.fields.status.statusCategory.key === "indeterminate"
-    ).length,
-    done: previousPeriodTasks.filter(i => 
-      i.fields.status.statusCategory.name === "Done" || 
-      i.fields.status.statusCategory.key === "done"
-    ).length
+    total: previousPeriodCompletedTasks.length,
+    todo: 0, // Não temos dados de período anterior para pendentes
+    inProgress: 0, // Não temos dados de período anterior para em andamento
+    done: previousPeriodCompletedTasks.length // Todas as tarefas do período anterior estão concluídas
   };
 
   // Calculate percentage changes
@@ -494,7 +488,7 @@ export default function DashboardPage() {
                   value={currentStats.total}
                   change={changes.total}
                   icon={<CheckCircle className="text-blue-600" size={20} />}
-                  description={`Criadas ${getPeriodDescription(filters.timePeriod)}`}
+                  description="Total de tarefas no projeto"
                   iconBgColor="bg-blue-100"
                   periodType={filters.timePeriod}
                 />
@@ -503,7 +497,7 @@ export default function DashboardPage() {
                   value={currentStats.todo}
                   change={changes.todo}
                   icon={<Clock className="text-gray-600" size={20} />}
-                  description={`Criadas ${getPeriodDescription(filters.timePeriod)} - pendentes`}
+                  description="Tarefas pendentes atualmente"
                   iconBgColor="bg-gray-100"
                   periodType={filters.timePeriod}
                 />
@@ -512,7 +506,7 @@ export default function DashboardPage() {
                   value={currentStats.inProgress}
                   change={changes.inProgress}
                   icon={<Rocket className="text-yellow-600" size={20} />}
-                  description={`Criadas ${getPeriodDescription(filters.timePeriod)} - em andamento`}
+                  description="Tarefas em desenvolvimento"
                   iconBgColor="bg-yellow-100"
                   periodType={filters.timePeriod}
                 />
@@ -521,7 +515,7 @@ export default function DashboardPage() {
                   value={currentStats.done}
                   change={changes.done}
                   icon={<CheckCircle className="text-green-600" size={20} />}
-                  description={`Criadas ${getPeriodDescription(filters.timePeriod)} - finalizadas`}
+                  description={`Concluídas ${getPeriodDescription(filters.timePeriod)}`}
                   iconBgColor="bg-green-100"
                   periodType={filters.timePeriod}
                 />

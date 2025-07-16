@@ -129,8 +129,8 @@ export default function KanbanPage() {
     });
   };
 
-  // Helper function to get tasks created in the current period (same logic as dashboard)
-  const getTasksCreatedInPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
+  // Helper function to get tasks completed in the current period (same logic as dashboard)
+  const getTasksCompletedInPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
     const now = new Date();
     let startDate: Date;
 
@@ -148,29 +148,34 @@ export default function KanbanPage() {
         if (filters.customStartDate) {
           startDate = new Date(filters.customStartDate);
         } else {
-          return allIssues; // If no custom start date, return all
+          return allIssues.filter(issue => issue.fields.resolutiondate); // Return all completed tasks
         }
         break;
       default:
-        return allIssues; // Return all tasks for unknown period
+        return allIssues.filter(issue => issue.fields.resolutiondate); // Return all completed tasks
     }
 
     return allIssues.filter(issue => {
-      const createdDate = new Date(issue.fields.created);
+      // Only consider tasks that have been resolved/completed
+      if (!issue.fields.resolutiondate) {
+        return false;
+      }
+      
+      const resolutionDate = new Date(issue.fields.resolutiondate);
       if (filters.timePeriod === 'custom' && filters.customEndDate) {
         const endDate = new Date(filters.customEndDate);
-        return createdDate >= startDate && createdDate <= endDate;
+        return resolutionDate >= startDate && resolutionDate <= endDate;
       }
-      return createdDate >= startDate;
+      return resolutionDate >= startDate;
     });
   };
 
-  // Get tasks created in the current period for consistency with dashboard
-  const tasksCreatedInPeriod = getTasksCreatedInPeriod(issues, filters);
+  // Get tasks completed in the current period for consistency with dashboard
+  const tasksCompletedInPeriod = getTasksCompletedInPeriod(issues, filters);
 
   const stats = {
-    total: tasksCreatedInPeriod.length, // Total baseado em criação no período
-    todo: tasksCreatedInPeriod.filter(issue => {
+    total: issues.length, // Total de todas as tasks atuais
+    todo: issues.filter(issue => {
       const statusCategoryName = issue.fields.status.statusCategory.name;
       const statusName = issue.fields.status.name.toLowerCase();
       
@@ -180,7 +185,7 @@ export default function KanbanPage() {
              statusName.includes("novo") ||
              statusName.includes("backlog");
     }).length,
-    inProgress: tasksCreatedInPeriod.filter(issue => {
+    inProgress: issues.filter(issue => {
       const statusCategoryName = issue.fields.status.statusCategory.name;
       const statusName = issue.fields.status.name.toLowerCase();
       
@@ -191,18 +196,8 @@ export default function KanbanPage() {
              statusName.includes("desenvolvimento") ||
              statusName.includes("em andamento");
     }).length,
-    done: tasksCreatedInPeriod.filter(issue => {
-      const statusCategoryName = issue.fields.status.statusCategory.name;
-      const statusName = issue.fields.status.name.toLowerCase();
-      
-      return statusCategoryName === "Done" || 
-             statusCategoryName === "complete" ||
-             statusName.includes("concluído") ||
-             statusName.includes("done") ||
-             statusName.includes("fechado") ||
-             statusName.includes("resolvido");
-    }).length,
-    thisWeek: tasksCreatedInPeriod.filter(i => {
+    done: tasksCompletedInPeriod.length, // Tarefas concluídas no período
+    thisWeek: tasksCompletedInPeriod.filter(i => {
       if (!i.fields.resolutiondate) return false;
       const resolved = new Date(i.fields.resolutiondate);
       const weekAgo = new Date();
@@ -211,8 +206,8 @@ export default function KanbanPage() {
     }).length
   };
 
-  // Helper function to get tasks from previous period for comparison (same logic as dashboard)
-  const getTasksFromPreviousPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
+  // Helper function to get tasks completed in previous period for comparison (same logic as dashboard)
+  const getTasksCompletedFromPreviousPeriod = (allIssues: JiraIssue[], filters: DashboardFilters) => {
     const now = new Date();
     let startDate: Date;
     let endDate: Date;
@@ -236,8 +231,13 @@ export default function KanbanPage() {
     }
 
     return allIssues.filter(issue => {
-      const createdDate = new Date(issue.fields.created);
-      return createdDate >= startDate && createdDate <= endDate;
+      // Only consider tasks that have been resolved/completed
+      if (!issue.fields.resolutiondate) {
+        return false;
+      }
+      
+      const resolutionDate = new Date(issue.fields.resolutiondate);
+      return resolutionDate >= startDate && resolutionDate <= endDate;
     });
   };
 
@@ -249,44 +249,15 @@ export default function KanbanPage() {
     return Math.round(((current - previous) / previous) * 100);
   };
 
-  // Get previous period data for comparisons
-  const previousPeriodTasks = getTasksFromPreviousPeriod(issues, filters);
+  // Get previous period data for comparisons (based on completion date)
+  const previousPeriodCompletedTasks = getTasksCompletedFromPreviousPeriod(issues, filters);
 
-  // Calculate previous period stats
+  // Calculate previous period stats (based on completed tasks)
   const previousStats = {
-    total: previousPeriodTasks.length,
-    todo: previousPeriodTasks.filter(issue => {
-      const statusCategoryName = issue.fields.status.statusCategory.name;
-      const statusName = issue.fields.status.name.toLowerCase();
-      
-      return statusCategoryName === "To Do" || 
-             statusCategoryName === "new" ||
-             statusName.includes("aberto") ||
-             statusName.includes("novo") ||
-             statusName.includes("backlog");
-    }).length,
-    inProgress: previousPeriodTasks.filter(issue => {
-      const statusCategoryName = issue.fields.status.statusCategory.name;
-      const statusName = issue.fields.status.name.toLowerCase();
-      
-      return statusCategoryName === "In Progress" || 
-             statusCategoryName === "indeterminate" ||
-             statusName.includes("progresso") ||
-             statusName.includes("progress") ||
-             statusName.includes("desenvolvimento") ||
-             statusName.includes("em andamento");
-    }).length,
-    done: previousPeriodTasks.filter(issue => {
-      const statusCategoryName = issue.fields.status.statusCategory.name;
-      const statusName = issue.fields.status.name.toLowerCase();
-      
-      return statusCategoryName === "Done" || 
-             statusCategoryName === "complete" ||
-             statusName.includes("concluído") ||
-             statusName.includes("done") ||
-             statusName.includes("fechado") ||
-             statusName.includes("resolvido");
-    }).length
+    total: previousPeriodCompletedTasks.length,
+    todo: 0, // Não temos dados de período anterior para pendentes
+    inProgress: 0, // Não temos dados de período anterior para em andamento
+    done: previousPeriodCompletedTasks.length // Todas as tarefas do período anterior estão concluídas
   };
 
   // Calculate percentage changes
@@ -311,8 +282,8 @@ export default function KanbanPage() {
   // Debug: Log para verificar se os números estão corretos
   console.log("Kanban Stats Debug:", {
     filter: filters.timePeriod,
-    totalCreatedInPeriod: tasksCreatedInPeriod.length,
-    totalFilteredByAPI: issues.length,
+    totalCompletedInPeriod: tasksCompletedInPeriod.length,
+    totalAllTasks: issues.length,
     totalAvailable: issuesData?.total || 0,
     todoCount: stats.todo,
     inProgressCount: stats.inProgress,
@@ -366,7 +337,7 @@ export default function KanbanPage() {
                 value={stats.total}
                 change={changes.total}
                 icon={<CheckCircle className="text-blue-600" size={20} />}
-                description={`Criadas ${getPeriodDescription(filters.timePeriod)}`}
+                description="Total de tarefas no projeto"
                 iconBgColor="bg-blue-100"
                 periodType={filters.timePeriod}
               />
@@ -375,7 +346,7 @@ export default function KanbanPage() {
                 value={stats.todo}
                 change={changes.todo}
                 icon={<Clock className="text-gray-600" size={20} />}
-                description={`Criadas ${getPeriodDescription(filters.timePeriod)} - pendentes`}
+                description="Tarefas pendentes atualmente"
                 iconBgColor="bg-gray-100"
                 periodType={filters.timePeriod}
               />
@@ -384,7 +355,7 @@ export default function KanbanPage() {
                 value={stats.inProgress}
                 change={changes.inProgress}
                 icon={<Rocket className="text-yellow-600" size={20} />}
-                description={`Criadas ${getPeriodDescription(filters.timePeriod)} - em andamento`}
+                description="Tarefas em desenvolvimento"
                 iconBgColor="bg-yellow-100"
                 periodType={filters.timePeriod}
               />
@@ -393,7 +364,7 @@ export default function KanbanPage() {
                 value={stats.done}
                 change={changes.done}
                 icon={<CheckCircle className="text-green-600" size={20} />}
-                description={`Criadas ${getPeriodDescription(filters.timePeriod)} - finalizadas`}
+                description={`Concluídas ${getPeriodDescription(filters.timePeriod)}`}
                 iconBgColor="bg-green-100"
                 periodType={filters.timePeriod}
               />
@@ -406,13 +377,13 @@ export default function KanbanPage() {
                 filters={filters}
                 onFiltersChange={handleFiltersChange}
                 sprints={sprints || []}
-                issues={tasksCreatedInPeriod}
+                issues={tasksCompletedInPeriod}
                 allIssues={issues}
                 credentials={credentials!}
                 projectKey={selectedProject.key}
                 quickStats={{
-                  activeIssues: stats.inProgress,
-                  teamMembers: Array.from(new Set(tasksCreatedInPeriod.filter(i => i.fields.assignee).map(i => i.fields.assignee!.displayName))).length,
+                  activeIssues: stats.inProgress, // Tarefas em andamento
+                  teamMembers: Array.from(new Set(issues.filter(i => i.fields.assignee).map(i => i.fields.assignee!.displayName))).length,
                   avgCycleTime: 0
                 }}
               />
@@ -434,7 +405,7 @@ export default function KanbanPage() {
 
                   <TabsContent value="kanban">
                     <KanbanBoard 
-                      issues={tasksCreatedInPeriod} 
+                      issues={tasksCompletedInPeriod} 
                       credentials={credentials!} 
                       projectKey={selectedProject.key} 
                     />
@@ -442,7 +413,7 @@ export default function KanbanPage() {
 
                   <TabsContent value="charts">
                     <CompletionCharts 
-                      issues={tasksCreatedInPeriod} 
+                      issues={tasksCompletedInPeriod} 
                       allIssues={issues} 
                       dashboardFilters={filters}
                     />

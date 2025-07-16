@@ -4,7 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomDatePicker } from "@/components/custom-date-picker";
 import type { DashboardFilters, JiraSprint, JiraIssue, JiraCredentials } from "@/types/jira";
-import { useJiraStatusCategories, useProjectMembers } from "@/hooks/use-jira-data";
+import { useJiraStatusCategories } from "@/hooks/use-jira-data";
 
 interface SidebarProps {
   filters: DashboardFilters;
@@ -31,10 +31,9 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
 
   // Get dynamic status categories and issue types
   const { data: statusData } = useJiraStatusCategories(credentials, projectKey);
-  const { data: projectMembers } = useProjectMembers(credentials, projectKey);
   
-  // Get unique issue types from dynamic data or fallback to issues
-  const issueTypes = statusData?.issueTypes.map(type => type.name) || 
+  // Get unique issue types from dynamic data or fallback to issues with proper typing
+  const issueTypes: string[] = statusData?.issueTypes.map((type: any) => type.name) || 
     (issues && issues.length > 0 
       ? Array.from(new Set(issues.map(issue => issue.fields.issuetype.name)))
       : ["Story", "Bug", "Task", "Epic"]); // fallback default types
@@ -183,8 +182,8 @@ export function Sidebar({ filters, onFiltersChange, sprints, issues, allIssues, 
           <label className="block text-sm font-medium text-gray-700 mb-3">Tipo de Issue</label>
           <div className="space-y-2">
             {issueTypes && issueTypes.length > 0 ? issueTypes
-              .filter(issueType => issueType && issueType.trim().length > 0)
-              .map((issueType) => (
+              .filter((issueType: string) => issueType && issueType.trim().length > 0)
+              .map((issueType: string) => (
               <div key={issueType} className="flex items-center space-x-2">
                 <Checkbox
                   id={issueType}
