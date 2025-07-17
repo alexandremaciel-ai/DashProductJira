@@ -11,6 +11,10 @@ import { Header } from "@/components/header";
 import { Sidebar } from "@/components/sidebar";
 import { Footer } from "@/components/footer";
 import { MetricsCard } from "@/components/metrics-card";
+import { ConfigurableMetricsCard } from "@/components/configurable-metrics-card";
+import { useCardConfig } from "@/hooks/use-card-config";
+import { calculateCardMetric } from "@/lib/metrics-calculator";
+import { useCardFlipState } from "@/hooks/use-card-flip-state";
 
 
 
@@ -38,6 +42,8 @@ export default function DashboardPage() {
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 10;
+  const { cardConfig, updateCardConfig } = useCardConfig();
+  const { handleCardFlip, isCardFlipped } = useCardFlipState();
   // Helper function to load filters from sessionStorage
   const loadFiltersFromStorage = (): DashboardFilters => {
     try {
@@ -388,18 +394,12 @@ export default function DashboardPage() {
   const currentPeriodCompletedTasks = getTasksCompletedInPeriod(allIssuesData?.issues || [], filters);
   const previousPeriodCompletedTasks = getTasksCompletedFromPreviousPeriod(allIssuesData?.issues || [], filters);
 
-  // Calculate current period stats (show current status of all tasks)
+  // Calculate current period stats using card configuration
   const currentStats = {
-    total: issues.length, // Total de todas as tasks atuais
-    todo: issues.filter(i => 
-      i.fields.status.statusCategory.name === "To Do" || 
-      i.fields.status.statusCategory.key === "new"
-    ).length,
-    inProgress: issues.filter(i => 
-      i.fields.status.statusCategory.name === "In Progress" || 
-      i.fields.status.statusCategory.key === "indeterminate"
-    ).length,
-    done: currentPeriodCompletedTasks.length // Tarefas concluídas no período
+    total: calculateCardMetric(issues, cardConfig.total),
+    todo: calculateCardMetric(issues, cardConfig.todo),
+    inProgress: calculateCardMetric(issues, cardConfig.inProgress),
+    done: calculateCardMetric(currentPeriodCompletedTasks, cardConfig.done)
   };
 
   // Calculate previous period stats (based on completed tasks)
@@ -481,9 +481,9 @@ export default function DashboardPage() {
                   Ver Quadro Kanban
                 </Button>
               </div>
-              {/* Metrics Cards - Based on Creation Date */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <MetricsCard
+              {/* Configurable Metrics Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 items-start">
+                <ConfigurableMetricsCard
                   title="Total de Tarefas"
                   value={currentStats.total}
                   change={changes.total}
@@ -491,8 +491,13 @@ export default function DashboardPage() {
                   description="Total de tarefas no projeto"
                   iconBgColor="bg-blue-100"
                   periodType={filters.timePeriod}
+                  cardConfig={cardConfig.total}
+                  allIssues={issues}
+                  onConfigChange={(config) => updateCardConfig('total', config)}
+                  isFlipped={isCardFlipped('total')}
+                  onFlip={() => handleCardFlip('total')}
                 />
-                <MetricsCard
+                <ConfigurableMetricsCard
                   title="A Fazer"
                   value={currentStats.todo}
                   change={changes.todo}
@@ -500,8 +505,13 @@ export default function DashboardPage() {
                   description="Tarefas pendentes atualmente"
                   iconBgColor="bg-gray-100"
                   periodType={filters.timePeriod}
+                  cardConfig={cardConfig.todo}
+                  allIssues={issues}
+                  onConfigChange={(config) => updateCardConfig('todo', config)}
+                  isFlipped={isCardFlipped('todo')}
+                  onFlip={() => handleCardFlip('todo')}
                 />
-                <MetricsCard
+                <ConfigurableMetricsCard
                   title="Em Andamento"
                   value={currentStats.inProgress}
                   change={changes.inProgress}
@@ -509,8 +519,13 @@ export default function DashboardPage() {
                   description="Tarefas em desenvolvimento"
                   iconBgColor="bg-yellow-100"
                   periodType={filters.timePeriod}
+                  cardConfig={cardConfig.inProgress}
+                  allIssues={issues}
+                  onConfigChange={(config) => updateCardConfig('inProgress', config)}
+                  isFlipped={isCardFlipped('inProgress')}
+                  onFlip={() => handleCardFlip('inProgress')}
                 />
-                <MetricsCard
+                <ConfigurableMetricsCard
                   title="Concluídas"
                   value={currentStats.done}
                   change={changes.done}
@@ -518,6 +533,11 @@ export default function DashboardPage() {
                   description={`Concluídas ${getPeriodDescription(filters.timePeriod)}`}
                   iconBgColor="bg-green-100"
                   periodType={filters.timePeriod}
+                  cardConfig={cardConfig.done}
+                  allIssues={currentPeriodCompletedTasks}
+                  onConfigChange={(config) => updateCardConfig('done', config)}
+                  isFlipped={isCardFlipped('done')}
+                  onFlip={() => handleCardFlip('done')}
                 />
               </div>
 

@@ -10,6 +10,10 @@ import { Sidebar } from "@/components/sidebar";
 import { KanbanBoard } from "@/components/kanban-board";
 import { CompletionCharts } from "@/components/completion-charts";
 import { MetricsCard } from "@/components/metrics-card";
+import { ConfigurableMetricsCard } from "@/components/configurable-metrics-card";
+import { useCardConfig } from "@/hooks/use-card-config";
+import { calculateCardMetric } from "@/lib/metrics-calculator";
+import { useCardFlipState } from "@/hooks/use-card-flip-state";
 
 import { useJiraAuth } from "@/hooks/use-jira-auth";
 import { useJiraIssues, useJiraSprints, useProjectMembers } from "@/hooks/use-jira-data";
@@ -21,6 +25,8 @@ export default function KanbanPage() {
   const { credentials, logout, loadStoredCredentials } = useJiraAuth();
   const [selectedProject, setSelectedProject] = useState<JiraProject | null>(null);
   const [aiEnabled, setAIEnabled] = useState(false);
+  const { cardConfig, updateCardConfig } = useCardConfig();
+  const { handleCardFlip, isCardFlipped } = useCardFlipState();
 
   // Helper function to load filters from sessionStorage (same as dashboard)
   const loadFiltersFromStorage = (): DashboardFilters => {
@@ -174,29 +180,10 @@ export default function KanbanPage() {
   const tasksCompletedInPeriod = getTasksCompletedInPeriod(issues, filters);
 
   const stats = {
-    total: issues.length, // Total de todas as tasks atuais
-    todo: issues.filter(issue => {
-      const statusCategoryName = issue.fields.status.statusCategory.name;
-      const statusName = issue.fields.status.name.toLowerCase();
-      
-      return statusCategoryName === "To Do" || 
-             statusCategoryName === "new" ||
-             statusName.includes("aberto") ||
-             statusName.includes("novo") ||
-             statusName.includes("backlog");
-    }).length,
-    inProgress: issues.filter(issue => {
-      const statusCategoryName = issue.fields.status.statusCategory.name;
-      const statusName = issue.fields.status.name.toLowerCase();
-      
-      return statusCategoryName === "In Progress" || 
-             statusCategoryName === "indeterminate" ||
-             statusName.includes("progresso") ||
-             statusName.includes("progress") ||
-             statusName.includes("desenvolvimento") ||
-             statusName.includes("em andamento");
-    }).length,
-    done: tasksCompletedInPeriod.length, // Tarefas concluídas no período
+    total: calculateCardMetric(issues, cardConfig.total),
+    todo: calculateCardMetric(issues, cardConfig.todo),
+    inProgress: calculateCardMetric(issues, cardConfig.inProgress),
+    done: calculateCardMetric(tasksCompletedInPeriod, cardConfig.done),
     thisWeek: tasksCompletedInPeriod.filter(i => {
       if (!i.fields.resolutiondate) return false;
       const resolved = new Date(i.fields.resolutiondate);
@@ -330,9 +317,9 @@ export default function KanbanPage() {
           </div>
         ) : (
           <>
-            {/* Advanced Statistics Cards - Same as Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <MetricsCard
+            {/* Configurable Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 items-start">
+              <ConfigurableMetricsCard
                 title="Total de Tarefas"
                 value={stats.total}
                 change={changes.total}
@@ -340,8 +327,13 @@ export default function KanbanPage() {
                 description="Total de tarefas no projeto"
                 iconBgColor="bg-blue-100"
                 periodType={filters.timePeriod}
+                cardConfig={cardConfig.total}
+                allIssues={issues}
+                onConfigChange={(config) => updateCardConfig('total', config)}
+                isFlipped={isCardFlipped('total')}
+                onFlip={() => handleCardFlip('total')}
               />
-              <MetricsCard
+              <ConfigurableMetricsCard
                 title="A Fazer"
                 value={stats.todo}
                 change={changes.todo}
@@ -349,8 +341,13 @@ export default function KanbanPage() {
                 description="Tarefas pendentes atualmente"
                 iconBgColor="bg-gray-100"
                 periodType={filters.timePeriod}
+                cardConfig={cardConfig.todo}
+                allIssues={issues}
+                onConfigChange={(config) => updateCardConfig('todo', config)}
+                isFlipped={isCardFlipped('todo')}
+                onFlip={() => handleCardFlip('todo')}
               />
-              <MetricsCard
+              <ConfigurableMetricsCard
                 title="Em Andamento"
                 value={stats.inProgress}
                 change={changes.inProgress}
@@ -358,8 +355,13 @@ export default function KanbanPage() {
                 description="Tarefas em desenvolvimento"
                 iconBgColor="bg-yellow-100"
                 periodType={filters.timePeriod}
+                cardConfig={cardConfig.inProgress}
+                allIssues={issues}
+                onConfigChange={(config) => updateCardConfig('inProgress', config)}
+                isFlipped={isCardFlipped('inProgress')}
+                onFlip={() => handleCardFlip('inProgress')}
               />
-              <MetricsCard
+              <ConfigurableMetricsCard
                 title="Concluídas"
                 value={stats.done}
                 change={changes.done}
@@ -367,6 +369,11 @@ export default function KanbanPage() {
                 description={`Concluídas ${getPeriodDescription(filters.timePeriod)}`}
                 iconBgColor="bg-green-100"
                 periodType={filters.timePeriod}
+                cardConfig={cardConfig.done}
+                allIssues={tasksCompletedInPeriod}
+                onConfigChange={(config) => updateCardConfig('done', config)}
+                isFlipped={isCardFlipped('done')}
+                onFlip={() => handleCardFlip('done')}
               />
             </div>
 
