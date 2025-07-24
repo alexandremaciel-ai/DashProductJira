@@ -1,28 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-
-// Dynamic imports based on environment
-let setupVite: any = null;
-let serveStatic: any = null;
-let log: any = null;
-
-if (process.env.NODE_ENV === "development") {
-  try {
-    const viteModule = await import("./vite.js");
-    setupVite = viteModule.setupVite;
-    serveStatic = viteModule.serveStatic;
-    log = viteModule.log;
-  } catch (error) {
-    console.warn("Vite not available, falling back to production mode");
-    const prodModule = await import("./production-utils.js");
-    serveStatic = prodModule.serveStatic;
-    log = prodModule.log;
-  }
-} else {
-  const prodModule = await import("./production-utils.js");
-  serveStatic = prodModule.serveStatic;
-  log = prodModule.log;
-}
+import { registerRoutes } from "./routes.js";
+import { log, serveStatic } from "./production-utils.js";
 
 const app = express();
 app.use(express.json());
@@ -69,14 +47,8 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "development" && setupVite) {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
+  // Serve static files in production
+  serveStatic(app);
 
   // ALWAYS serve the app on port 3000
   // this serves both the API and the client.

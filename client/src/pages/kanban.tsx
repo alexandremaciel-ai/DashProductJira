@@ -11,6 +11,7 @@ import { KanbanBoard } from "@/components/kanban-board";
 import { CompletionCharts } from "@/components/completion-charts";
 import { MetricsCard } from "@/components/metrics-card";
 import { ConfigurableMetricsCard } from "@/components/configurable-metrics-card";
+import { TotalTasksCard } from "@/components/total-tasks-card";
 import { useCardConfig } from "@/hooks/use-card-config";
 import { calculateCardMetric } from "@/lib/metrics-calculator";
 import { useCardFlipState } from "@/hooks/use-card-flip-state";
@@ -319,17 +320,12 @@ export default function KanbanPage() {
           <>
             {/* Configurable Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 items-start">
-              <ConfigurableMetricsCard
+              <TotalTasksCard
                 title="Total de Tarefas"
-                value={stats.total}
-                change={changes.total}
                 icon={<CheckCircle className="text-blue-600" size={20} />}
-                description="Total de tarefas no projeto"
+                description="Total de tarefas criadas no projeto"
                 iconBgColor="bg-blue-100"
-                periodType={filters.timePeriod}
-                cardConfig={cardConfig.total}
                 allIssues={issues}
-                onConfigChange={(config) => updateCardConfig('total', config)}
                 isFlipped={isCardFlipped('total')}
                 onFlip={() => handleCardFlip('total')}
               />

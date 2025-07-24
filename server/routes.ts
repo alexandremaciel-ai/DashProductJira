@@ -3,6 +3,15 @@ import { createServer, type Server } from "http";
 import axios from "axios";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for Docker
+  app.get("/health", (req, res) => {
+    res.status(200).json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime()
+    });
+  });
+
   // Jira API proxy routes to handle CORS
   app.post("/api/jira/auth", async (req, res) => {
     try {
